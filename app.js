@@ -23,8 +23,7 @@ const ROOMS = [
   { id: "c201", name: "C201", floor: 2, zone: "C Wing", capacity: 34, type: "Classroom", lightsKw: 0.45, hvacKw: 2.8, x: 164, z: 294, w: 72, d: 58, h: 38 },
   { id: "c202", name: "C202", floor: 2, zone: "C Wing", capacity: 36, type: "Classroom", lightsKw: 0.48, hvacKw: 3.0, x: 236, z: 294, w: 72, d: 58, h: 38 },
   { id: "c203", name: "C203", floor: 2, zone: "C Wing", capacity: 38, type: "Classroom", lightsKw: 0.5, hvacKw: 3.1, x: 308, z: 294, w: 72, d: 58, h: 38 },
-  { id: "c204", name: "C204", floor: 2, zone: "C Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 380, z: 294, w: 72, d: 58, h: 38 },
-  { id: "blackbox", name: "Black Box", floor: 2, zone: "Mall Area", capacity: 80, type: "Performance", lightsKw: 1.6, hvacKw: 4.8, x: 452, z: 358, w: 132, d: 46, h: 42 }
+  { id: "c204", name: "C204", floor: 2, zone: "C Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 380, z: 294, w: 72, d: 58, h: 38 }
 ];
 
 const DEFAULT_EVENTS = [];
@@ -779,7 +778,7 @@ function downloadTrainingTemplate() {
   const csv = [
     "roomId,start,end,students,lights,hvac,projector,outdoorTemp,actualKwh",
     "a101,15:30,16:30,24,true,true,false,82,4.6",
-    "blackbox,17:00,19:00,45,true,true,true,76,9.8"
+    "auditorium,17:00,19:00,180,true,true,true,76,31.5"
   ].join("\n");
   const link = document.createElement("a");
   link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));

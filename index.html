@@ -78,6 +78,19 @@
 
     <div id="plannerStart" class="planner-anchor" aria-hidden="true"></div>
     <div class="app-shell" id="appShell">
+      <div class="main-open-animation" id="mainOpenAnimation" aria-hidden="true">
+        <div class="lightup-room">
+          <span class="cartoon-wall"></span>
+          <span class="cartoon-floor"></span>
+          <span class="cartoon-light"></span>
+          <span class="cartoon-glow"></span>
+          <span class="cartoon-desk"></span>
+          <span class="cartoon-window"></span>
+          <span class="cartoon-switch">
+            <i></i>
+          </span>
+        </div>
+      </div>
       <header class="topbar">
         <div class="brand">
           <span class="brand-mark logo-mark" aria-hidden="true"></span>
@@ -246,8 +259,15 @@
 
     <script>
       document.getElementById("enterApp").addEventListener("click", function () {
+        const appShell = document.getElementById("appShell");
         document.getElementById("homeScreen").classList.add("is-hidden");
-        document.getElementById("appShell").scrollIntoView();
+        appShell.scrollIntoView();
+        appShell.classList.remove("is-entering");
+        void appShell.offsetWidth;
+        appShell.classList.add("is-entering");
+        window.setTimeout(function () {
+          appShell.classList.remove("is-entering");
+        }, 3400);
       });
     </script>
     <script src="app.js"></script>

@@ -103,7 +103,79 @@ h3 {
 }
 
 .app-shell {
+  position: relative;
   min-height: 100vh;
+}
+
+.main-open-animation {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: none;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 42%, rgba(226, 241, 248, 0.92), rgba(10, 17, 24, 0.76));
+  pointer-events: none;
+}
+
+.app-shell.is-entering .main-open-animation {
+  display: grid;
+  animation: mainIntroFade 3400ms ease-out both;
+}
+
+.main-open-animation .lightup-room {
+  width: min(520px, 88vw);
+  height: min(300px, 52vh);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.32), inset 0 -28px 0 rgba(0, 0, 0, 0.16);
+  animation: none;
+}
+
+.main-open-animation .cartoon-wall,
+.main-open-animation .cartoon-floor,
+.main-open-animation .cartoon-light,
+.main-open-animation .cartoon-glow,
+.main-open-animation .cartoon-desk,
+.main-open-animation .cartoon-window,
+.main-open-animation .cartoon-switch,
+.main-open-animation .cartoon-switch i {
+  animation: none;
+}
+
+.app-shell.is-entering .main-open-animation .lightup-room {
+  animation: roomBrighten 2800ms ease-out 100ms both;
+}
+
+.app-shell.is-entering .main-open-animation .cartoon-wall {
+  animation: wallWake 2800ms ease-out 100ms both;
+}
+
+.app-shell.is-entering .main-open-animation .cartoon-floor {
+  animation: floorWake 2800ms ease-out 100ms both;
+}
+
+.app-shell.is-entering .main-open-animation .cartoon-light {
+  animation: fixtureWake 2800ms ease-out 100ms both;
+}
+
+.app-shell.is-entering .main-open-animation .cartoon-glow {
+  animation: lightCone 2800ms cubic-bezier(.2, .8, .2, 1) 100ms both;
+}
+
+.app-shell.is-entering .main-open-animation .cartoon-desk {
+  animation: deskWake 2800ms ease-out 100ms both;
+}
+
+.app-shell.is-entering .main-open-animation .cartoon-window {
+  animation: windowWake 2800ms ease-out 100ms both;
+}
+
+.app-shell.is-entering .main-open-animation .cartoon-switch {
+  animation: switchPlateWake 2800ms ease-out 100ms both;
+}
+
+.app-shell.is-entering .main-open-animation .cartoon-switch i {
+  animation: switchFlip 2800ms cubic-bezier(.18, .9, .18, 1) 100ms both;
 }
 
 .planner-anchor {
@@ -498,6 +570,15 @@ h3 {
   48%, 100% {
     background: #1f8555;
     transform: translateX(-50%) rotate(-15deg);
+  }
+}
+
+@keyframes mainIntroFade {
+  0%, 74% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }
 
@@ -1804,6 +1885,7 @@ label {
 
 @media (prefers-reduced-motion: reduce) {
   .lightup-room,
+  .main-open-animation,
   .cartoon-wall,
   .cartoon-floor,
   .cartoon-glow,
