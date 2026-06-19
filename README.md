@@ -23,3 +23,4 @@ auditorium,17:00,19:00,180,true,true,true,76,31.5
 ```
 
 Model features include room area, capacity, event duration, occupancy ratio, floor, lights, HVAC, projector, after-hours use, large-space flag, outdoor temperature, heating demand, and cooling demand. Weather-aware HVAC timing uses the free Open-Meteo API. CO2 savings use an assumption of `0.385 kg CO2/kWh`.
+

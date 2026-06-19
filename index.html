@@ -7,6 +7,12 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
+    <div class="site-intro" aria-hidden="true">
+      <div class="intro-mark">
+        <span class="intro-bulb"></span>
+        <span class="intro-word">LightsOut</span>
+      </div>
+    </div>
     <section class="home-screen" id="homeScreen" aria-labelledby="homeTitle">
       <div class="home-content">
         <div class="home-copy">
@@ -78,19 +84,6 @@
 
     <div id="plannerStart" class="planner-anchor" aria-hidden="true"></div>
     <div class="app-shell" id="appShell">
-      <div class="main-open-animation" id="mainOpenAnimation" aria-hidden="true">
-        <div class="lightup-room">
-          <span class="cartoon-wall"></span>
-          <span class="cartoon-floor"></span>
-          <span class="cartoon-light"></span>
-          <span class="cartoon-glow"></span>
-          <span class="cartoon-desk"></span>
-          <span class="cartoon-window"></span>
-          <span class="cartoon-switch">
-            <i></i>
-          </span>
-        </div>
-      </div>
       <header class="topbar">
         <div class="brand">
           <span class="brand-mark logo-mark" aria-hidden="true"></span>
@@ -152,6 +145,13 @@
           </div>
 
           <div class="focus-strip" id="focusStrip"></div>
+
+          <div class="assumption-box visual-assumption">
+            <h3>Responsible AI check</h3>
+            <p><strong>Risk:</strong> estimates can be wrong if room equipment or weather differs from the assumptions.</p>
+            <p><strong>Mitigation:</strong> the app shows assumptions and confidence instead of hiding uncertainty.</p>
+            <p><strong>Human control:</strong> custodians decide what actually turns on or off.</p>
+          </div>
         </section>
 
         <aside class="side-panel" id="plannerPanel" aria-label="Planner controls">
@@ -241,12 +241,6 @@
             <div class="schedule-list" id="scheduleList" aria-live="polite"></div>
           </div>
 
-          <div class="assumption-box">
-            <h3>Responsible AI check</h3>
-            <p><strong>Risk:</strong> estimates can be wrong if room equipment or weather differs from the assumptions.</p>
-            <p><strong>Mitigation:</strong> the app shows assumptions and confidence instead of hiding uncertainty.</p>
-            <p><strong>Human control:</strong> custodians decide what actually turns on or off.</p>
-          </div>
         </aside>
       </main>
     </div>
@@ -259,15 +253,8 @@
 
     <script>
       document.getElementById("enterApp").addEventListener("click", function () {
-        const appShell = document.getElementById("appShell");
         document.getElementById("homeScreen").classList.add("is-hidden");
-        appShell.scrollIntoView();
-        appShell.classList.remove("is-entering");
-        void appShell.offsetWidth;
-        appShell.classList.add("is-entering");
-        window.setTimeout(function () {
-          appShell.classList.remove("is-entering");
-        }, 3400);
+        document.getElementById("appShell").scrollIntoView();
       });
     </script>
     <script src="app.js"></script>
