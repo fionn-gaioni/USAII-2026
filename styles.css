@@ -421,29 +421,14 @@ input[type="range"] {
   transform: translateZ(112px);
 }
 
-.floor-three {
-  box-shadow: 0 0 0 1px rgba(188, 232, 255, 0.2), 0 0 50px rgba(188, 232, 255, 0.12);
-  transform: translateZ(224px);
-}
-
 .floor-two .floor-wing {
   background: rgba(120, 190, 220, 0.065);
   border-color: rgba(120, 190, 220, 0.22);
 }
 
-.floor-three .floor-wing {
-  background: rgba(210, 236, 255, 0.06);
-  border-color: rgba(210, 236, 255, 0.2);
-}
-
 .floor-two .floor-label {
   left: 48px;
   top: 38px;
-}
-
-.floor-three .floor-label {
-  left: 180px;
-  top: 164px;
 }
 
 .room-block {

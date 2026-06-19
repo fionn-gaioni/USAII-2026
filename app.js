@@ -12,12 +12,7 @@ const ROOMS = [
   { id: "cafeteria", name: "Cafeteria", floor: 2, zone: "Mall Area", capacity: 260, type: "Cafeteria", lightsKw: 3.8, hvacKw: 8.6, x: 520, z: 92, w: 122, d: 78, h: 52 },
   { id: "b201", name: "B201 IMP", floor: 2, zone: "B Wing", capacity: 36, type: "Classroom", lightsKw: 0.5, hvacKw: 3.0, x: 108, z: 164, w: 84, d: 66, h: 40 },
   { id: "a224", name: "A224 EXTEMP", floor: 2, zone: "A Wing", capacity: 34, type: "Competition", lightsKw: 0.48, hvacKw: 3.0, x: 332, z: 78, w: 96, d: 60, h: 38 },
-  { id: "a220", name: "A220 Prep", floor: 2, zone: "A Wing", capacity: 48, type: "Prep Room", lightsKw: 0.66, hvacKw: 3.8, x: 440, z: 78, w: 92, d: 60, h: 38 },
-  { id: "media", name: "Media Center", floor: 3, zone: "Third Floor", capacity: 120, type: "Library", lightsKw: 1.4, hvacKw: 5.6, x: 276, z: 190, w: 160, d: 96, h: 48 },
-  { id: "tab", name: "Tab Room", floor: 3, zone: "Third Floor", capacity: 42, type: "Operations", lightsKw: 0.62, hvacKw: 3.2, x: 454, z: 194, w: 90, d: 74, h: 40 },
-  { id: "judges", name: "Judges Lounge", floor: 3, zone: "Third Floor", capacity: 64, type: "Lounge", lightsKw: 0.82, hvacKw: 4.2, x: 178, z: 190, w: 92, d: 82, h: 40 },
-  { id: "c309", name: "C309 Senate", floor: 3, zone: "C Wing", capacity: 56, type: "Competition", lightsKw: 0.72, hvacKw: 3.9, x: 360, z: 330, w: 104, d: 60, h: 38 },
-  { id: "c311", name: "C311 Congress", floor: 3, zone: "C Wing", capacity: 56, type: "Competition", lightsKw: 0.72, hvacKw: 3.9, x: 484, z: 330, w: 110, d: 60, h: 38 }
+  { id: "a220", name: "A220 Prep", floor: 2, zone: "A Wing", capacity: 48, type: "Prep Room", lightsKw: 0.66, hvacKw: 3.8, x: 440, z: 78, w: 92, d: 60, h: 38 }
 ];
 
 const DEFAULT_EVENTS = [];
@@ -25,7 +20,7 @@ const DEFAULT_EVENTS = [];
 const state = {
   date: new Date().toISOString().slice(0, 10),
   events: [],
-  selectedRoomId: "media",
+  selectedRoomId: "courtyard",
   previewMinute: 7 * 60 + 45,
   rotation: -36,
   pitch: 60,
@@ -40,7 +35,8 @@ const state = {
   dragStartX: 0,
   dragStartY: 0,
   dragStartRotation: -36,
-  dragStartPitch: 60
+  dragStartPitch: 60,
+  modelBuilt: false
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -184,7 +180,7 @@ function getEventFeatures(event, room) {
     room.capacity / 420,
     durationHours / 4,
     occupancy,
-    room.floor / 3,
+    room.floor / 2,
     event.needs.lights ? 1 : 0,
     event.needs.hvac ? 1 : 0,
     event.needs.projector ? 1 : 0,
@@ -239,7 +235,7 @@ function trainEnergyModel() {
   const weights = new Array(MODEL_FEATURES.length).fill(0);
   const rate = 0.018;
   let loss = 0;
-  for (let epoch = 0; epoch < 900; epoch += 1) {
+  for (let epoch = 0; epoch < 520; epoch += 1) {
     const gradient = new Array(weights.length).fill(0);
     loss = 0;
     examples.forEach((example) => {
@@ -327,7 +323,10 @@ function buildActions() {
 
 function loadEvents() {
   const stored = localStorage.getItem(storageKey());
-  state.events = stored ? JSON.parse(stored) : cloneDefaultEvents();
+  const loaded = stored ? JSON.parse(stored) : cloneDefaultEvents();
+  state.events = loaded.filter((event) => getRoom(event.roomId));
+  if (!getRoom(state.selectedRoomId)) state.selectedRoomId = ROOMS[0].id;
+  if (stored && state.events.length !== loaded.length) saveEvents();
 }
 
 function saveEvents() {
@@ -343,38 +342,28 @@ function renderRoomOptions() {
 function renderModel() {
   const model = $("#schoolModel");
   updateModelTransform();
-  const floorPlates = `
-    <span class="floor-plate floor-one">
-      <span class="floor-wing top-wing"></span>
-      <span class="floor-wing left-wing"></span>
-      <span class="floor-wing bottom-wing"></span>
-      <span class="floor-wing right-stub"></span>
-      <span class="courtyard-cutout">Courtyard</span>
-      <span class="floor-label">Floor 1</span>
-    </span>
-    <span class="floor-plate floor-two">
-      <span class="floor-wing top-wing"></span>
-      <span class="floor-wing left-wing"></span>
-      <span class="floor-wing bottom-wing"></span>
-      <span class="floor-wing right-stub"></span>
-      <span class="floor-label">Floor 2</span>
-    </span>
-    <span class="floor-plate floor-three">
-      <span class="floor-wing top-wing"></span>
-      <span class="floor-wing left-wing"></span>
-      <span class="floor-wing bottom-wing"></span>
-      <span class="floor-wing right-stub"></span>
-      <span class="floor-label">Floor 3</span>
-    </span>
-  `;
-  const rooms = ROOMS.map((room) => {
-    const layerState = getRoomLayerState(room.id);
-    const active = activeEventsForRoom(room.id).find((event) => getSystemsForEvent(event).length);
-    const soon = soonEventsForRoom(room.id).find((event) => getSystemsForEvent(event).length);
-    const note = active ? `${active.name} is active now` : soon ? `${soon.name} starts at ${formatTime(soon.start)}` : "selected layers off";
-    const floorZ = (room.floor - 1) * 118;
-    return `
-      <div class="room-block status-${layerState.status} ${layerState.layerClass} ${state.selectedRoomId === room.id ? "selected" : ""}"
+  if (!state.modelBuilt) {
+    const floorPlates = `
+      <span class="floor-plate floor-one">
+        <span class="floor-wing top-wing"></span>
+        <span class="floor-wing left-wing"></span>
+        <span class="floor-wing bottom-wing"></span>
+        <span class="floor-wing right-stub"></span>
+        <span class="courtyard-cutout">Courtyard</span>
+        <span class="floor-label">Floor 1</span>
+      </span>
+      <span class="floor-plate floor-two">
+        <span class="floor-wing top-wing"></span>
+        <span class="floor-wing left-wing"></span>
+        <span class="floor-wing bottom-wing"></span>
+        <span class="floor-wing right-stub"></span>
+        <span class="floor-label">Floor 2</span>
+      </span>
+    `;
+    const rooms = ROOMS.map((room) => {
+      const floorZ = (room.floor - 1) * 118;
+      return `
+      <div class="room-block"
         style="--x:${room.x}px; --z:${room.z}px; --w:${room.w}px; --d:${room.d}px; --h:${room.h}px; --floor-z:${floorZ}px;"
         data-room-id="${room.id}">
         <span class="room-top"></span>
@@ -382,11 +371,24 @@ function renderModel() {
         <span class="room-back"></span>
         <span class="room-left"></span>
         <span class="room-side"></span>
-        <button class="room-label" type="button" aria-label="${room.name}: ${note}" data-room-id="${room.id}">${room.name}</button>
+        <button class="room-label" type="button" data-room-id="${room.id}">${room.name}</button>
       </div>
     `;
-  }).join("");
-  model.innerHTML = floorPlates + rooms;
+    }).join("");
+    model.innerHTML = floorPlates + rooms;
+    state.modelBuilt = true;
+  }
+
+  ROOMS.forEach((room) => {
+    const block = model.querySelector(`.room-block[data-room-id="${room.id}"]`);
+    const label = block.querySelector(".room-label");
+    const layerState = getRoomLayerState(room.id);
+    const active = activeEventsForRoom(room.id).find((event) => getSystemsForEvent(event).length);
+    const soon = soonEventsForRoom(room.id).find((event) => getSystemsForEvent(event).length);
+    const note = active ? `${active.name} is active now` : soon ? `${soon.name} starts at ${formatTime(soon.start)}` : "selected layers off";
+    block.className = `room-block status-${layerState.status} ${layerState.layerClass} ${state.selectedRoomId === room.id ? "selected" : ""}`;
+    label.setAttribute("aria-label", `${room.name}: ${note}`);
+  });
 }
 
 function renderFocusStrip() {
