@@ -367,10 +367,10 @@ h3 {
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: 6px;
+  border-radius: 10px;
   overflow: hidden;
-  background: #101914;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  background: url("assets/lightsout-logo.png") center / cover no-repeat;
+  box-shadow: 0 9px 18px rgba(8, 16, 13, 0.16);
 }
 
 .logo-mark::before,
@@ -380,20 +380,11 @@ h3 {
 }
 
 .logo-mark::before {
-  width: 20px;
-  height: 20px;
-  border-radius: 50% 50% 45% 45%;
-  background: linear-gradient(180deg, #ffe07b, #f5a623);
-  box-shadow: 0 0 22px rgba(245, 166, 35, 0.72);
-  transform: translateY(-2px);
+  display: none;
 }
 
 .logo-mark::after {
-  width: 11px;
-  height: 5px;
-  border-radius: 2px;
-  background: #173a2d;
-  transform: translateY(13px);
+  display: none;
 }
 
 .brand p,
@@ -449,6 +440,14 @@ label,
   max-width: 1540px;
   margin: 0 auto;
   padding: 18px;
+}
+
+.workspace.side-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.panel-toggle {
+  white-space: nowrap;
 }
 
 .campus-panel,
@@ -963,6 +962,10 @@ input[type="range"] {
   gap: 12px;
 }
 
+.side-panel[hidden] {
+  display: none;
+}
+
 .tab-shell {
   overflow: hidden;
 }
@@ -1046,6 +1049,7 @@ label {
 }
 
 .room-picker {
+  position: relative;
   display: grid;
   gap: 7px;
 }
@@ -1057,6 +1061,56 @@ label {
     radial-gradient(circle at 15px 17px, transparent 0 5px, #66706a 5px 6px, transparent 6px),
     linear-gradient(45deg, transparent 0 20px, #66706a 20px 22px, transparent 22px),
     #fff;
+}
+
+.room-results {
+  display: grid;
+  gap: 5px;
+  max-height: 178px;
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid #d8e4dd;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 14px 28px rgba(24, 34, 29, 0.12);
+}
+
+.room-results[hidden] {
+  display: none;
+}
+
+.room-results button {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: #f7faf8;
+  color: var(--ink);
+  text-align: left;
+  box-shadow: none;
+}
+
+.room-results button:hover,
+.room-results button:focus-visible {
+  border-color: #c6ded1;
+  background: var(--green-soft);
+  transform: none;
+  box-shadow: none;
+}
+
+.room-results strong {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.room-results span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.25;
 }
 
 .field-hint {
@@ -1185,6 +1239,15 @@ label {
   line-height: 1.05;
 }
 
+.kpi-saved {
+  border-color: #cfe7d9;
+  background: #f2fbf5;
+}
+
+.kpi-saved strong {
+  color: var(--green-dark);
+}
+
 .action-list,
 .schedule-list {
   display: grid;
@@ -1280,6 +1343,11 @@ label {
 .model-card.amber {
   border-color: #f3d99b;
   background: #fff8e8;
+}
+
+.model-card.yellow {
+  border-color: #f1c232;
+  background: #fff3b8;
 }
 
 .schedule-main {

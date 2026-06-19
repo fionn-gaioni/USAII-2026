@@ -17,7 +17,14 @@ const ROOMS = [
   { id: "a201", name: "A201", floor: 2, zone: "A Wing", capacity: 48, type: "Prep Room", lightsKw: 0.66, hvacKw: 3.8, x: 164, z: 76, w: 72, d: 58, h: 38 },
   { id: "a202", name: "A202", floor: 2, zone: "A Wing", capacity: 34, type: "Competition", lightsKw: 0.48, hvacKw: 3.0, x: 236, z: 76, w: 72, d: 58, h: 38 },
   { id: "b201", name: "B201", floor: 2, zone: "B Wing", capacity: 36, type: "Classroom", lightsKw: 0.5, hvacKw: 3.0, x: 76, z: 90, w: 82, d: 48, h: 40 },
-  { id: "b202", name: "B202", floor: 2, zone: "B Wing", capacity: 34, type: "Classroom", lightsKw: 0.46, hvacKw: 2.9, x: 76, z: 138, w: 82, d: 48, h: 40 }
+  { id: "b202", name: "B202", floor: 2, zone: "B Wing", capacity: 34, type: "Classroom", lightsKw: 0.46, hvacKw: 2.9, x: 76, z: 138, w: 82, d: 48, h: 40 },
+  { id: "b203", name: "B203", floor: 2, zone: "B Wing", capacity: 34, type: "Classroom", lightsKw: 0.46, hvacKw: 2.9, x: 76, z: 186, w: 82, d: 48, h: 40 },
+  { id: "b204", name: "B204", floor: 2, zone: "B Wing", capacity: 30, type: "Classroom", lightsKw: 0.4, hvacKw: 2.6, x: 76, z: 234, w: 82, d: 48, h: 40 },
+  { id: "c201", name: "C201", floor: 2, zone: "C Wing", capacity: 34, type: "Classroom", lightsKw: 0.45, hvacKw: 2.8, x: 164, z: 294, w: 72, d: 58, h: 38 },
+  { id: "c202", name: "C202", floor: 2, zone: "C Wing", capacity: 36, type: "Classroom", lightsKw: 0.48, hvacKw: 3.0, x: 236, z: 294, w: 72, d: 58, h: 38 },
+  { id: "c203", name: "C203", floor: 2, zone: "C Wing", capacity: 38, type: "Classroom", lightsKw: 0.5, hvacKw: 3.1, x: 308, z: 294, w: 72, d: 58, h: 38 },
+  { id: "c204", name: "C204", floor: 2, zone: "C Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 380, z: 294, w: 72, d: 58, h: 38 },
+  { id: "blackbox", name: "Black Box", floor: 2, zone: "Mall Area", capacity: 80, type: "Performance", lightsKw: 1.6, hvacKw: 4.8, x: 452, z: 358, w: 132, d: 46, h: 42 }
 ];
 
 const DEFAULT_EVENTS = [];
@@ -59,7 +66,8 @@ const state = {
   dragStartPitch: 60,
   framePending: false,
   renderPending: false,
-  modelBuilt: false
+  modelBuilt: false,
+  sidePanelCollapsed: false
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -310,6 +318,22 @@ function soonEventsForRoom(roomId) {
   });
 }
 
+function eventsOverlap(first, second) {
+  return minutes(first.start) < minutes(second.end) && minutes(second.start) < minutes(first.end);
+}
+
+function roomHasScheduleConflict(roomId, event) {
+  return state.events.some((scheduled) => {
+    return scheduled.id !== event.id && scheduled.roomId === roomId && eventsOverlap(scheduled, event);
+  });
+}
+
+function roomHasRecommendationConflict(roomId, event, recommendations) {
+  return recommendations.some((recommendation) => {
+    return recommendation.alternateRoom.id === roomId && eventsOverlap(recommendation.event, event);
+  });
+}
+
 function getRoomStatus(roomId) {
   return getRoomLayerState(roomId).status;
 }
@@ -459,7 +483,8 @@ function predictEnergyKwh(event, room = getRoom(event.roomId)) {
 }
 
 function getRoomMoveRecommendations() {
-  return state.events.map((event) => {
+  const recommendations = [];
+  state.events.forEach((event) => {
     const room = getRoom(event.roomId);
     const current = predictEnergyKwh(event, room).kwh;
     const alternate = ROOMS
@@ -467,21 +492,24 @@ function getRoomMoveRecommendations() {
       .filter((candidate) => candidate.floor === room.floor)
       .filter((candidate) => candidate.capacity >= Number(event.students))
       .filter((candidate) => candidate.capacity <= Math.max(Number(event.students) * 2.4, 34))
+      .filter((candidate) => !roomHasScheduleConflict(candidate.id, event))
+      .filter((candidate) => !roomHasRecommendationConflict(candidate.id, event, recommendations))
       .map((candidate) => {
         const moved = { ...event, roomId: candidate.id };
         return { room: candidate, kwh: predictEnergyKwh(moved, candidate).kwh };
       })
       .sort((a, b) => a.kwh - b.kwh)[0];
-    if (!alternate) return null;
+    if (!alternate) return;
     const savingsKwh = current - alternate.kwh;
-    return {
+    recommendations.push({
       event,
       currentRoom: room,
       alternateRoom: alternate.room,
       savingsKwh,
       savingsCo2: savingsKwh * CO2_KG_PER_KWH
-    };
-  }).filter(Boolean).sort((a, b) => b.savingsKwh - a.savingsKwh);
+    });
+  });
+  return recommendations.sort((a, b) => b.savingsKwh - a.savingsKwh);
 }
 
 function estimateTimingSavingsKwh(event, room = getRoom(event.roomId)) {
@@ -622,10 +650,41 @@ function findRoomFromSearch(value, allowFuzzy = false) {
   return matches.length === 1 ? matches[0] : null;
 }
 
+function getRoomSearchMatches(value) {
+  const query = value.trim().toLowerCase();
+  const matches = query
+    ? ROOMS.filter((room) => {
+      return roomOptionLabel(room).toLowerCase().includes(query)
+        || room.zone.toLowerCase().includes(query)
+        || room.type.toLowerCase().includes(query)
+        || room.id.toLowerCase().includes(query);
+    })
+    : ROOMS;
+  return matches.slice(0, 8);
+}
+
 function updateRoomHint(room, isError = false) {
   const hint = $("#roomHint");
   hint.textContent = room ? roomDetailLabel(room) : "Search by room name, wing, or space type.";
   hint.classList.toggle("is-error", isError);
+}
+
+function hideRoomResults() {
+  $("#roomResults").hidden = true;
+  $("#roomSearch").setAttribute("aria-expanded", "false");
+}
+
+function renderRoomResults(value = $("#roomSearch").value) {
+  const matches = getRoomSearchMatches(value);
+  const results = $("#roomResults");
+  results.hidden = !matches.length;
+  $("#roomSearch").setAttribute("aria-expanded", String(Boolean(matches.length)));
+  results.innerHTML = matches.map((room) => `
+    <button type="button" role="option" data-room-option="${room.id}">
+      <strong>${displayRoomName(room)}</strong>
+      <span>${room.zone} - ${room.type} - capacity ${room.capacity}</span>
+    </button>
+  `).join("");
 }
 
 function setRoomPicker(roomId) {
@@ -635,6 +694,7 @@ function setRoomPicker(roomId) {
   $("#roomSearch").value = roomOptionLabel(room);
   $("#roomSearch").setCustomValidity("");
   updateRoomHint(room);
+  hideRoomResults();
 }
 
 function resolveRoomSearch(allowFuzzy = false) {
@@ -653,9 +713,6 @@ function resolveRoomSearch(allowFuzzy = false) {
 }
 
 function renderRoomOptions() {
-  $("#roomList").innerHTML = ROOMS.map((room) => {
-    return `<option value="${roomOptionLabel(room)}"></option>`;
-  }).join("");
   setRoomPicker(state.selectedRoomId);
 }
 
@@ -741,7 +798,7 @@ function renderKpis(analysis) {
   $("#kpiStrip").innerHTML = `
     <div class="kpi"><span>On now</span><strong>${analysis.layerRoomsNow}</strong></div>
     <div class="kpi"><span>Soon</span><strong>${analysis.neededSoon}</strong></div>
-    <div class="kpi"><span>CO2</span><strong>${analysis.totalCo2.toFixed(1)} kg</strong></div>
+    <div class="kpi kpi-saved"><span>Saved CO2</span><strong>${analysis.aiSavings.totalCo2.toFixed(1)} kg</strong></div>
   `;
 }
 
@@ -776,7 +833,7 @@ function renderActions(actions) {
         <h3>${action.title}</h3>
         <p>${action.detail}</p>
         <div class="systems">
-          <span class="pill ${action.status === "Start" ? "blue" : "green"}">${action.status}</span>
+          <span class="pill ${action.status === "Start" ? "blue" : "red"}">${action.status}</span>
           <span class="pill ${action.confidence === "High" ? "green" : "amber"}">${action.confidence} confidence</span>
         </div>
       </div>
@@ -817,11 +874,13 @@ function buildModelInsights(analysis) {
     }
   });
 
-  if (analysis.totalKwh > 18) {
+  const afterSchoolEvents = state.events.filter((event) => minutes(event.start) >= 15 * 60).length;
+  const isBusyClubDay = state.events.length >= 6 || afterSchoolEvents >= 4;
+  if (isBusyClubDay && analysis.totalKwh > 20) {
     insights.push({
       title: "High-energy day",
       detail: "The model expects a heavier energy load today. Prioritize exact shutoff times for large rooms and HVAC zones.",
-      tone: "amber"
+      tone: "yellow"
     });
   }
 
@@ -882,6 +941,10 @@ function renderScheduleList() {
 }
 
 function render() {
+  $(".workspace").classList.toggle("side-collapsed", state.sidePanelCollapsed);
+  $("#plannerPanel").hidden = state.sidePanelCollapsed;
+  $("#toggleSidePanel").textContent = state.sidePanelCollapsed ? "Show panel" : "Hide panel";
+  $("#toggleSidePanel").setAttribute("aria-expanded", String(!state.sidePanelCollapsed));
   $("#timeReadout").textContent = formatTime(timeFromMinutes(state.previewMinute));
   $("#timeSlider").value = state.previewMinute;
   $("#layerLights").checked = state.layers.lights;
@@ -1013,6 +1076,7 @@ function bindEvents() {
     state.rotation = -36;
     state.pitch = 60;
     state.activeSideTab = "checklist";
+    state.sidePanelCollapsed = false;
     saveEvents();
     resetForm();
     render();
@@ -1028,13 +1092,20 @@ function bindEvents() {
     setSideTab("checklist");
   });
 
+  $("#toggleSidePanel").addEventListener("click", () => {
+    state.sidePanelCollapsed = !state.sidePanelCollapsed;
+    render();
+  });
+
   $("#cancelEdit").addEventListener("click", () => {
     resetForm();
     setSideTab("checklist");
   });
 
   $("#roomSearch").addEventListener("input", () => {
-    const room = findRoomFromSearch($("#roomSearch").value);
+    const value = $("#roomSearch").value;
+    const room = findRoomFromSearch(value);
+    renderRoomResults(value);
     if (!room) {
       $("#roomSelect").value = "";
       $("#roomSearch").setCustomValidity("");
@@ -1042,12 +1113,29 @@ function bindEvents() {
       return;
     }
     state.selectedRoomId = room.id;
-    setRoomPicker(room.id);
+    $("#roomSelect").value = room.id;
+    updateRoomHint(room);
     render();
   });
 
+  $("#roomSearch").addEventListener("focus", () => {
+    renderRoomResults();
+  });
+
   $("#roomSearch").addEventListener("blur", () => {
-    resolveRoomSearch(true);
+    window.setTimeout(() => {
+      resolveRoomSearch(true);
+      hideRoomResults();
+    }, 120);
+  });
+
+  $("#roomResults").addEventListener("mousedown", (event) => {
+    const option = event.target.closest("[data-room-option]");
+    if (!option) return;
+    event.preventDefault();
+    state.selectedRoomId = option.dataset.roomOption;
+    setRoomPicker(option.dataset.roomOption);
+    render();
   });
 
   $("#eventForm").addEventListener("submit", (event) => {

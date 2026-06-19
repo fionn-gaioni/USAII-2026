@@ -94,6 +94,7 @@
                 <span>Heat/cooling</span>
               </label>
             </fieldset>
+            <button class="ghost-button panel-toggle" id="toggleSidePanel" type="button" aria-controls="plannerPanel" aria-expanded="true">Hide panel</button>
           </div>
 
           <div class="campus-stage" id="campusStage">
@@ -117,7 +118,7 @@
           <div class="focus-strip" id="focusStrip"></div>
         </section>
 
-        <aside class="side-panel" aria-label="Planner controls">
+        <aside class="side-panel" id="plannerPanel" aria-label="Planner controls">
           <div class="side-section tab-shell">
             <div class="side-tabs" role="tablist" aria-label="Planner tabs">
               <button class="side-tab active" id="checklistTab" data-side-tab="checklist" type="button" role="tab" aria-controls="checklistPanel" aria-selected="true">Custodian checklist</button>
@@ -149,9 +150,9 @@
                 </label>
                 <div class="room-picker">
                   <label for="roomSearch">Room</label>
-                  <input id="roomSearch" type="search" list="roomList" placeholder="Search rooms" autocomplete="off" required>
+                  <input id="roomSearch" type="search" placeholder="Search rooms" autocomplete="off" required aria-controls="roomResults" aria-expanded="false">
                   <input id="roomSelect" type="hidden">
-                  <datalist id="roomList"></datalist>
+                  <div class="room-results" id="roomResults" role="listbox" hidden></div>
                   <p class="field-hint" id="roomHint"></p>
                 </div>
                 <div class="form-grid">
