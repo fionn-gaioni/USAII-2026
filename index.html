@@ -30,6 +30,18 @@
                   <h2>AI CO2 savings estimate</h2>
                   <p>The CO2 estimate compares the current plan against the recommended lighting and HVAC checklist, using kWh assumptions and a regional emissions factor.</p>
                 </article>
+                <article class="training-panel">
+                  <h2>Further training</h2>
+                  <p id="trainingSummary">Import measured energy rows to retrain the local model with real school data.</p>
+                  <div class="training-actions">
+                    <label class="training-upload">
+                      Import CSV
+                      <input id="trainingImport" type="file" accept=".csv,text/csv">
+                    </label>
+                    <button id="downloadTrainingTemplate" class="ghost-button" type="button">Template</button>
+                    <button id="clearTrainingData" class="ghost-button" type="button">Clear real data</button>
+                  </div>
+                </article>
               </div>
             </details>
           </div>

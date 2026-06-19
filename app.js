@@ -57,6 +57,7 @@ const state = {
     updatedAt: null,
     error: ""
   },
+  trainingExamples: [],
   dragging: false,
   dragMoved: false,
   wasDragClick: false,
@@ -89,7 +90,8 @@ function cloneDefaultEvents() {
 }
 
 let energyModel = null;
-const MODEL_FEATURES = ["bias", "area", "capacity", "duration", "occupancy", "floor", "lights", "hvac", "projector", "afterHours", "largeSpace"];
+const MODEL_FEATURES = ["bias", "area", "capacity", "duration", "occupancy", "floor", "lights", "hvac", "projector", "afterHours", "largeSpace", "outdoorTemp", "heatDemand", "coolDemand"];
+const TRAINING_STORAGE_KEY = "lightsout:trainingExamples";
 const EVENT_TYPE_LABELS = {
   club: "Club",
   exam: "Exam/testing",
@@ -378,11 +380,22 @@ function estimateEnergyFormula(event, room) {
   return lightingKwh + hvacKwh + projectorKwh;
 }
 
+function getModelOutdoorTemp(event) {
+  if (event.outdoorTemp !== null && event.outdoorTemp !== undefined && event.outdoorTemp !== "" && Number.isFinite(Number(event.outdoorTemp))) return Number(event.outdoorTemp);
+  const forecast = getOutdoorTempAt(event.start);
+  const temp = forecast?.apparent ?? forecast?.temp;
+  if (Number.isFinite(temp)) return temp;
+  return 70;
+}
+
 function getEventFeatures(event, room) {
   const durationHours = Math.max(0, minutes(event.end) - minutes(event.start)) / 60;
   const occupancy = Math.min(1.4, Number(event.students) / Math.max(1, room.capacity));
   const startsAfterHours = minutes(event.start) < 8 * 60 || minutes(event.start) >= 15 * 60;
   const area = (room.w * room.d) / 26000;
+  const outdoorTemp = getModelOutdoorTemp(event);
+  const heatDemand = event.needs.hvac ? Math.max(0, 65 - outdoorTemp) / 45 : 0;
+  const coolDemand = event.needs.hvac ? Math.max(0, outdoorTemp - 74) / 35 : 0;
   return [
     1,
     area,
@@ -394,7 +407,10 @@ function getEventFeatures(event, room) {
     event.needs.hvac ? 1 : 0,
     event.needs.projector ? 1 : 0,
     startsAfterHours ? 1 : 0,
-    room.capacity >= 120 ? 1 : 0
+    room.capacity >= 120 ? 1 : 0,
+    outdoorTemp / 100,
+    heatDemand,
+    coolDemand
   ];
 }
 
@@ -406,7 +422,9 @@ function syntheticTargetKwh(event, room) {
   const afterHoursPenalty = minutes(event.start) >= 15 * 60 || minutes(event.start) < 8 * 60 ? 0.35 : 0;
   const floorPenalty = room.floor > 1 && event.needs.hvac ? 0.16 * room.floor : 0;
   const roomTypePenalty = room.type === "Assembly" || room.type === "Cafeteria" ? 0.7 : room.type === "Outdoor" ? -0.9 : 0;
-  return Math.max(0.05, base + largePenalty + afterHoursPenalty + floorPenalty + roomTypePenalty);
+  const temp = getModelOutdoorTemp(event);
+  const weatherPenalty = event.needs.hvac ? durationHours * (Math.max(0, 62 - temp) * 0.035 + Math.max(0, temp - 78) * 0.045) : 0;
+  return Math.max(0.05, base + largePenalty + afterHoursPenalty + floorPenalty + roomTypePenalty + weatherPenalty);
 }
 
 function trainEnergyModel() {
@@ -414,57 +432,94 @@ function trainEnergyModel() {
   const starts = ["07:15", "08:30", "14:45", "15:30", "17:00"];
   const durations = [45, 60, 90, 120];
   const attendanceRatios = [0.18, 0.35, 0.65, 0.9];
+  const temperatures = [36, 52, 68, 82, 91];
 
   ROOMS.forEach((room) => {
     starts.forEach((start) => {
       durations.forEach((duration) => {
         attendanceRatios.forEach((ratio, index) => {
-          const startMinute = minutes(start);
-          const end = timeFromMinutes(startMinute + duration);
-          const event = {
-            roomId: room.id,
-            start,
-            end,
-            students: Math.max(4, Math.round(room.capacity * ratio)),
-            needs: {
-              lights: true,
-              hvac: room.type !== "Outdoor" && index !== 0,
-              projector: ["Classroom", "Competition", "Prep Room", "Operations"].includes(room.type) && index % 2 === 0
-            }
-          };
-          examples.push({
-            x: getEventFeatures(event, room),
-            y: syntheticTargetKwh(event, room)
+          temperatures.forEach((outdoorTemp) => {
+            const startMinute = minutes(start);
+            const end = timeFromMinutes(startMinute + duration);
+            const event = {
+              roomId: room.id,
+              start,
+              end,
+              students: Math.max(4, Math.round(room.capacity * ratio)),
+              outdoorTemp,
+              needs: {
+                lights: true,
+                hvac: room.type !== "Outdoor" && index !== 0,
+                projector: ["Classroom", "Competition", "Prep Room", "Operations", "Performance"].includes(room.type) && index % 2 === 0
+              }
+            };
+            examples.push({
+              x: getEventFeatures(event, room),
+              y: syntheticTargetKwh(event, room),
+              weight: 1,
+              source: "synthetic"
+            });
           });
         });
       });
     });
   });
 
+  state.trainingExamples.forEach((sample) => {
+    const room = getRoom(sample.roomId);
+    if (!room || !Number.isFinite(sample.actualKwh)) return;
+    const event = {
+      roomId: sample.roomId,
+      start: sample.start,
+      end: sample.end,
+      students: sample.students,
+      outdoorTemp: sample.outdoorTemp,
+      needs: { ...sample.needs }
+    };
+    examples.push({
+      x: getEventFeatures(event, room),
+      y: sample.actualKwh,
+      weight: 5,
+      source: "real"
+    });
+  });
+
   const weights = new Array(MODEL_FEATURES.length).fill(0);
-  const rate = 0.018;
+  const rate = 0.014;
   let loss = 0;
-  for (let epoch = 0; epoch < 520; epoch += 1) {
+  let weightedCount = 0;
+  for (let epoch = 0; epoch < 620; epoch += 1) {
     const gradient = new Array(weights.length).fill(0);
     loss = 0;
+    weightedCount = 0;
     examples.forEach((example) => {
       const prediction = dot(weights, example.x);
       const error = prediction - example.y;
-      loss += error * error;
+      const weight = example.weight || 1;
+      loss += weight * error * error;
+      weightedCount += weight;
       example.x.forEach((value, index) => {
-        gradient[index] += error * value;
+        gradient[index] += weight * error * value;
       });
     });
     weights.forEach((_, index) => {
-      weights[index] -= (rate * gradient[index]) / examples.length;
+      weights[index] -= (rate * gradient[index]) / weightedCount;
     });
-    loss /= examples.length;
+    loss /= weightedCount;
   }
 
+  const realExamples = examples.filter((example) => example.source === "real");
+  const realLoss = realExamples.reduce((sum, example) => {
+    const error = dot(weights, example.x) - example.y;
+    return sum + error * error;
+  }, 0);
   energyModel = {
     weights,
     examples: examples.length,
-    rmse: Math.sqrt(loss)
+    syntheticExamples: examples.length - realExamples.length,
+    realExamples: realExamples.length,
+    rmse: Math.sqrt(loss),
+    realRmse: realExamples.length ? Math.sqrt(realLoss / realExamples.length) : null
   };
 }
 
@@ -609,10 +664,147 @@ function saveEvents() {
   localStorage.setItem(storageKey(), JSON.stringify(state.events));
 }
 
+function loadTrainingExamples() {
+  try {
+    const raw = localStorage.getItem(TRAINING_STORAGE_KEY);
+    state.trainingExamples = raw ? JSON.parse(raw).filter(isValidTrainingExample) : [];
+  } catch {
+    state.trainingExamples = [];
+  }
+}
+
+function saveTrainingExamples() {
+  localStorage.setItem(TRAINING_STORAGE_KEY, JSON.stringify(state.trainingExamples));
+}
+
 function renderHomeModelDetail() {
   const detail = $("#homeModelDetail");
   if (!detail || !energyModel) return;
-  detail.textContent = `Trained in this browser on ${energyModel.examples} synthetic Ardrey Kell room-use scenarios. Current validation error is about ${energyModel.rmse.toFixed(2)} kWh RMSE, and schedule data stays local.`;
+  const realText = energyModel.realExamples
+    ? ` plus ${energyModel.realExamples} imported real measured rows`
+    : "";
+  const realRmse = energyModel.realRmse
+    ? ` Real-data error is about ${energyModel.realRmse.toFixed(2)} kWh RMSE.`
+    : "";
+  detail.textContent = `Trained in this browser on ${energyModel.syntheticExamples} synthetic Ardrey Kell room-use scenarios${realText}. Current validation error is about ${energyModel.rmse.toFixed(2)} kWh RMSE.${realRmse} Schedule data stays local.`;
+  renderTrainingSummary();
+}
+
+function renderTrainingSummary(message = "") {
+  const summary = $("#trainingSummary");
+  if (!summary || !energyModel) return;
+  const base = state.trainingExamples.length
+    ? `${state.trainingExamples.length} real measured row${state.trainingExamples.length === 1 ? "" : "s"} saved locally. Import more CSV rows any time to retrain.`
+    : "No real measured rows yet. Import a CSV to train beyond the synthetic school scenarios.";
+  summary.textContent = message || base;
+}
+
+function isTruthyCsvValue(value) {
+  return ["1", "true", "yes", "y", "on"].includes(String(value).trim().toLowerCase());
+}
+
+function isValidTrainingExample(sample) {
+  return getRoom(sample.roomId)
+    && /^\d{2}:\d{2}$/.test(sample.start)
+    && /^\d{2}:\d{2}$/.test(sample.end)
+    && minutes(sample.end) > minutes(sample.start)
+    && Number.isFinite(Number(sample.students))
+    && Number(sample.students) > 0
+    && Number.isFinite(Number(sample.actualKwh))
+    && Number(sample.actualKwh) > 0
+    && sample.needs;
+}
+
+function parseCsvRows(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let quoted = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const next = text[index + 1];
+    if (char === "\"" && quoted && next === "\"") {
+      cell += "\"";
+      index += 1;
+    } else if (char === "\"") {
+      quoted = !quoted;
+    } else if (char === "," && !quoted) {
+      row.push(cell.trim());
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && next === "\n") index += 1;
+      row.push(cell.trim());
+      if (row.some(Boolean)) rows.push(row);
+      row = [];
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+  row.push(cell.trim());
+  if (row.some(Boolean)) rows.push(row);
+  return rows;
+}
+
+function parseTrainingCsv(text) {
+  const rows = parseCsvRows(text);
+  if (rows.length < 2) throw new Error("CSV needs a header row and at least one data row.");
+  const headers = rows[0].map((header) => header.trim().toLowerCase());
+  const getValue = (row, name) => row[headers.indexOf(name)] || "";
+  const required = ["roomid", "start", "end", "students", "actualkwh"];
+  const missing = required.filter((name) => !headers.includes(name));
+  if (missing.length) throw new Error(`Missing columns: ${missing.join(", ")}`);
+  const samples = rows.slice(1).map((row) => {
+    const outdoorTemp = getValue(row, "outdoortemp");
+    return {
+      roomId: getValue(row, "roomid").trim().toLowerCase(),
+      start: getValue(row, "start").padStart(5, "0"),
+      end: getValue(row, "end").padStart(5, "0"),
+      students: Number(getValue(row, "students")),
+      outdoorTemp: outdoorTemp === "" ? null : Number(outdoorTemp),
+      actualKwh: Number(getValue(row, "actualkwh")),
+      needs: {
+        lights: headers.includes("lights") ? isTruthyCsvValue(getValue(row, "lights")) : true,
+        hvac: headers.includes("hvac") ? isTruthyCsvValue(getValue(row, "hvac")) : true,
+        projector: headers.includes("projector") ? isTruthyCsvValue(getValue(row, "projector")) : false
+      }
+    };
+  });
+  const valid = samples.filter(isValidTrainingExample);
+  if (!valid.length) throw new Error("No valid rows found. Check roomId, times, students, and actualKwh.");
+  return valid;
+}
+
+function downloadTrainingTemplate() {
+  const csv = [
+    "roomId,start,end,students,lights,hvac,projector,outdoorTemp,actualKwh",
+    "a101,15:30,16:30,24,true,true,false,82,4.6",
+    "blackbox,17:00,19:00,45,true,true,true,76,9.8"
+  ].join("\n");
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  link.download = "lightsout-training-template.csv";
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function importTrainingFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    try {
+      const imported = parseTrainingCsv(String(reader.result || ""));
+      state.trainingExamples = [...state.trainingExamples, ...imported];
+      saveTrainingExamples();
+      trainEnergyModel();
+      renderHomeModelDetail();
+      render();
+      renderTrainingSummary(`Imported ${imported.length} measured row${imported.length === 1 ? "" : "s"} and retrained the model.`);
+    } catch (error) {
+      renderTrainingSummary(error.message);
+    }
+  });
+  reader.readAsText(file);
 }
 
 function roomOptionLabel(room) {
@@ -1092,6 +1284,24 @@ function bindEvents() {
     setSideTab("checklist");
   });
 
+  $("#downloadTrainingTemplate").addEventListener("click", () => {
+    downloadTrainingTemplate();
+  });
+
+  $("#trainingImport").addEventListener("change", (event) => {
+    importTrainingFile(event.target.files[0]);
+    event.target.value = "";
+  });
+
+  $("#clearTrainingData").addEventListener("click", () => {
+    state.trainingExamples = [];
+    saveTrainingExamples();
+    trainEnergyModel();
+    renderHomeModelDetail();
+    render();
+    renderTrainingSummary("Cleared real measured rows. The model is back to synthetic training only.");
+  });
+
   $("#toggleSidePanel").addEventListener("click", () => {
     state.sidePanelCollapsed = !state.sidePanelCollapsed;
     render();
@@ -1296,6 +1506,7 @@ function bindEvents() {
 }
 
 function init() {
+  loadTrainingExamples();
   trainEnergyModel();
   renderHomeModelDetail();
   $("#planDate").value = state.date;

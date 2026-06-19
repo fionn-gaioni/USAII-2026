@@ -216,6 +216,38 @@ h3 {
   line-height: 1.45;
 }
 
+.training-panel {
+  gap: 8px;
+}
+
+.training-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.training-upload,
+.training-actions button {
+  display: inline-grid;
+  place-items: center;
+  width: auto;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #d5ded9;
+  border-radius: 6px;
+  background: #f4f7f5;
+  color: #20352d;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.training-upload input {
+  display: none;
+}
+
 .home-preview {
   display: grid;
   gap: 16px;
