@@ -509,12 +509,12 @@ input[type="range"] {
   position: relative;
   min-height: calc(100vh - 238px);
   overflow: hidden;
+  contain: layout paint;
   background:
-    radial-gradient(circle at 50% 42%, rgba(78, 138, 164, 0.22), transparent 36%),
     linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px),
     linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
     #070b10;
-  background-size: auto, 56px 56px, 56px 56px, auto;
+  background-size: 56px 56px, 56px 56px, auto;
 }
 
 .scene-toolbar {
@@ -530,7 +530,6 @@ input[type="range"] {
   border-color: rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.9);
   color: #101a17;
-  backdrop-filter: blur(10px);
 }
 
 .campus-viewport {
@@ -568,7 +567,7 @@ input[type="range"] {
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
-  box-shadow: 0 38px 70px rgba(0, 0, 0, 0.56);
+  box-shadow: 0 22px 38px rgba(0, 0, 0, 0.42);
   transform: translateZ(-12px);
 }
 
@@ -587,39 +586,33 @@ input[type="range"] {
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.085);
-  box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.035), 0 14px 24px rgba(0, 0, 0, 0.24);
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.03), 0 8px 14px rgba(0, 0, 0, 0.18);
 }
 
 .top-wing {
-  left: 88px;
-  top: 18px;
-  width: 438px;
-  height: 104px;
+  left: 114px;
+  top: 36px;
+  width: 432px;
+  height: 84px;
 }
 
 .left-wing {
-  left: 22px;
-  top: 34px;
-  width: 122px;
-  height: 300px;
+  left: 56px;
+  top: 72px;
+  width: 106px;
+  height: 246px;
 }
 
 .bottom-wing {
-  left: 118px;
-  top: 262px;
-  width: 430px;
-  height: 92px;
-}
-
-.right-stub {
-  left: 500px;
-  top: 132px;
-  width: 84px;
-  height: 148px;
+  left: 114px;
+  top: 280px;
+  width: 432px;
+  height: 78px;
 }
 
 .floor-label,
-.courtyard-cutout {
+.courtyard-cutout,
+.hallway-label {
   position: absolute;
   padding: 4px 8px;
   border-radius: 999px;
@@ -631,25 +624,46 @@ input[type="range"] {
 }
 
 .floor-label {
-  left: 38px;
-  top: 304px;
+  left: 58px;
+  top: 322px;
 }
 
 .courtyard-cutout {
-  left: 250px;
-  top: 176px;
+  left: 276px;
+  top: 204px;
   color: rgba(255, 255, 255, 0.68);
   background: rgba(0, 0, 0, 0.5);
 }
 
+.hallway-label {
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(4, 9, 13, 0.58);
+  font-size: 11px;
+}
+
+.a-hallway {
+  left: 302px;
+  top: 142px;
+}
+
+.b-hallway {
+  left: 70px;
+  top: 246px;
+}
+
+.c-hallway {
+  left: 146px;
+  top: 262px;
+}
+
 .floor-one {
-  box-shadow: 0 22px 34px rgba(0, 0, 0, 0.42), inset 0 0 34px rgba(255, 255, 255, 0.03);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.32), inset 0 0 18px rgba(255, 255, 255, 0.025);
   transform: translateZ(-2px);
 }
 
 .floor-two {
-  box-shadow: 0 0 0 1px rgba(115, 193, 220, 0.26), 0 0 46px rgba(115, 193, 220, 0.18);
-  transform: translateZ(112px);
+  box-shadow: 0 0 0 1px rgba(115, 193, 220, 0.22), 0 0 18px rgba(115, 193, 220, 0.12);
+  transform: translateZ(58px);
 }
 
 .floor-two .floor-wing {
@@ -658,8 +672,8 @@ input[type="range"] {
 }
 
 .floor-two .floor-label {
-  left: 48px;
-  top: 38px;
+  left: 58px;
+  top: 322px;
 }
 
 .room-block {
@@ -688,7 +702,7 @@ input[type="range"] {
   border-radius: 5px;
   background: rgba(255, 255, 255, 0.24);
   transform: translateZ(calc(var(--h) - 1px));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3), 0 0 12px rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.26);
 }
 
 .room-front {
@@ -749,15 +763,24 @@ input[type="range"] {
   line-height: 1;
   text-align: center;
   transform: translate(-50%, -50%) translateZ(calc(var(--h) + 8px)) rotateZ(calc(var(--rotation, -36deg) * -1)) rotateX(calc(var(--pitch, 60deg) * -1));
-  box-shadow: 0 4px 12px rgba(25, 35, 31, 0.12);
+  box-shadow: 0 3px 7px rgba(25, 35, 31, 0.1);
   pointer-events: auto;
   cursor: pointer;
+}
+
+.room-label:hover,
+.room-label:active {
+  filter: none;
+  background: #fff;
+  color: #0d1218;
+  transform: translate(-50%, -50%) translateZ(calc(var(--h) + 8px)) rotateZ(calc(var(--rotation, -36deg) * -1)) rotateX(calc(var(--pitch, 60deg) * -1));
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
 }
 
 .room-block.status-on.layers-lights .room-top {
   background: rgba(255, 255, 255, 0.28);
   border-color: rgba(255, 203, 92, 0.95);
-  box-shadow: 0 0 24px rgba(245, 166, 35, 0.62), inset 0 0 20px rgba(245, 166, 35, 0.22), inset 0 0 0 2px rgba(255, 255, 255, 0.32);
+  box-shadow: 0 0 14px rgba(245, 166, 35, 0.5), inset 0 0 12px rgba(245, 166, 35, 0.18), inset 0 0 0 2px rgba(255, 255, 255, 0.28);
 }
 
 .room-block.status-on.layers-lights .room-front,
@@ -771,7 +794,7 @@ input[type="range"] {
 .room-block.status-on.layers-hvac .room-top {
   background: rgba(255, 255, 255, 0.26);
   border-color: rgba(119, 205, 238, 0.95);
-  box-shadow: 0 0 24px rgba(37, 111, 146, 0.58), inset 0 0 20px rgba(37, 111, 146, 0.3), inset 0 0 0 2px rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0 14px rgba(37, 111, 146, 0.46), inset 0 0 12px rgba(37, 111, 146, 0.24), inset 0 0 0 2px rgba(255, 255, 255, 0.26);
 }
 
 .room-block.status-on.layers-hvac .room-front,
@@ -785,7 +808,7 @@ input[type="range"] {
 .room-block.status-on.layers-both .room-top {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0 44%, rgba(245, 166, 35, 0.32) 44% 52%, rgba(37, 111, 146, 0.36) 52% 100%);
   border-color: rgba(255, 255, 255, 0.76);
-  box-shadow: 0 0 24px rgba(245, 166, 35, 0.44), 0 0 24px rgba(37, 111, 146, 0.42), inset 0 0 0 2px rgba(255, 255, 255, 0.34);
+  box-shadow: 0 0 14px rgba(245, 166, 35, 0.34), 0 0 14px rgba(37, 111, 146, 0.32), inset 0 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
 .room-block.status-on.layers-both .room-front {
@@ -803,18 +826,18 @@ input[type="range"] {
 .room-block.status-soon.layers-lights .room-top {
   background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 203, 92, 0.78);
-  box-shadow: 0 0 16px rgba(213, 138, 0, 0.36), inset 0 0 14px rgba(213, 138, 0, 0.18), inset 0 0 0 2px rgba(255, 255, 255, 0.24);
+  box-shadow: 0 0 10px rgba(213, 138, 0, 0.3), inset 0 0 8px rgba(213, 138, 0, 0.14), inset 0 0 0 2px rgba(255, 255, 255, 0.22);
 }
 
 .room-block.status-soon.layers-hvac .room-top {
   background: rgba(255, 255, 255, 0.18);
   border-color: rgba(119, 205, 238, 0.78);
-  box-shadow: 0 0 18px rgba(37, 111, 146, 0.42), inset 0 0 14px rgba(37, 111, 146, 0.22), inset 0 0 0 2px rgba(255, 255, 255, 0.24);
+  box-shadow: 0 0 10px rgba(37, 111, 146, 0.34), inset 0 0 8px rgba(37, 111, 146, 0.18), inset 0 0 0 2px rgba(255, 255, 255, 0.22);
 }
 
 .room-block.status-soon.layers-both .room-top {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0 50%, rgba(119, 205, 238, 0.22) 50% 100%);
-  box-shadow: 0 0 18px rgba(37, 111, 146, 0.34), 0 0 16px rgba(213, 138, 0, 0.3), inset 0 0 0 2px rgba(255, 255, 255, 0.24);
+  box-shadow: 0 0 10px rgba(37, 111, 146, 0.28), 0 0 10px rgba(213, 138, 0, 0.24), inset 0 0 0 2px rgba(255, 255, 255, 0.22);
 }
 
 .room-block.status-soon .room-front,
@@ -826,6 +849,18 @@ input[type="range"] {
 
 .room-block.status-off .room-top {
   background: rgba(255, 255, 255, 0.14);
+}
+
+.room-block.hovered .room-top {
+  background: rgba(255, 255, 255, 0.34);
+  border-color: rgba(255, 255, 255, 0.95);
+}
+
+.room-block.hovered .room-front,
+.room-block.hovered .room-back,
+.room-block.hovered .room-left,
+.room-block.hovered .room-side {
+  border-color: rgba(255, 255, 255, 0.8);
 }
 
 .room-block.selected .room-top {

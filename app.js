@@ -1,18 +1,18 @@
 const ROOMS = [
-  { id: "a101", name: "A101 NLD", floor: 1, zone: "A Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 514, z: 82, w: 88, d: 64, h: 36 },
-  { id: "a107", name: "A107 NLD", floor: 1, zone: "A Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 372, z: 82, w: 88, d: 64, h: 36 },
-  { id: "a111", name: "A111 NLD", floor: 1, zone: "A Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 230, z: 82, w: 88, d: 64, h: 36 },
-  { id: "b101", name: "B101 NLD", floor: 1, zone: "B Wing", capacity: 30, type: "Classroom", lightsKw: 0.4, hvacKw: 2.6, x: 94, z: 70, w: 86, d: 70, h: 38 },
-  { id: "b108", name: "B108", floor: 1, zone: "B Wing", capacity: 34, type: "Classroom", lightsKw: 0.46, hvacKw: 2.8, x: 88, z: 196, w: 88, d: 82, h: 38 },
-  { id: "c101", name: "C101 NPF", floor: 1, zone: "C Wing", capacity: 34, type: "Classroom", lightsKw: 0.45, hvacKw: 2.8, x: 514, z: 334, w: 90, d: 62, h: 36 },
-  { id: "c110", name: "C110 NPF", floor: 1, zone: "C Wing", capacity: 38, type: "Classroom", lightsKw: 0.5, hvacKw: 3.1, x: 368, z: 318, w: 106, d: 78, h: 38 },
-  { id: "c115", name: "C115 NLD", floor: 1, zone: "C Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 218, z: 334, w: 110, d: 62, h: 36 },
-  { id: "courtyard", name: "Courtyard", floor: 1, zone: "Central", capacity: 120, type: "Outdoor", lightsKw: 1.1, hvacKw: 0, x: 236, z: 190, w: 226, d: 90, h: 12 },
-  { id: "auditorium", name: "Auditorium", floor: 2, zone: "Mall Area", capacity: 420, type: "Assembly", lightsKw: 5.6, hvacKw: 12.4, x: 380, z: 282, w: 210, d: 98, h: 58 },
-  { id: "cafeteria", name: "Cafeteria", floor: 2, zone: "Mall Area", capacity: 260, type: "Cafeteria", lightsKw: 3.8, hvacKw: 8.6, x: 520, z: 92, w: 122, d: 78, h: 52 },
-  { id: "b201", name: "B201 IMP", floor: 2, zone: "B Wing", capacity: 36, type: "Classroom", lightsKw: 0.5, hvacKw: 3.0, x: 108, z: 164, w: 84, d: 66, h: 40 },
-  { id: "a224", name: "A224 EXTEMP", floor: 2, zone: "A Wing", capacity: 34, type: "Competition", lightsKw: 0.48, hvacKw: 3.0, x: 332, z: 78, w: 96, d: 60, h: 38 },
-  { id: "a220", name: "A220 Prep", floor: 2, zone: "A Wing", capacity: 48, type: "Prep Room", lightsKw: 0.66, hvacKw: 3.8, x: 440, z: 78, w: 92, d: 60, h: 38 }
+  { id: "a101", name: "A101 NLD", floor: 1, zone: "A Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 206, z: 76, w: 82, d: 58, h: 36 },
+  { id: "a107", name: "A107 NLD", floor: 1, zone: "A Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 288, z: 76, w: 82, d: 58, h: 36 },
+  { id: "a111", name: "A111 NLD", floor: 1, zone: "A Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 370, z: 76, w: 82, d: 58, h: 36 },
+  { id: "b101", name: "B101 NLD", floor: 1, zone: "B Wing", capacity: 30, type: "Classroom", lightsKw: 0.4, hvacKw: 2.6, x: 76, z: 116, w: 82, d: 58, h: 38 },
+  { id: "b108", name: "B108", floor: 1, zone: "B Wing", capacity: 34, type: "Classroom", lightsKw: 0.46, hvacKw: 2.8, x: 76, z: 174, w: 82, d: 58, h: 38 },
+  { id: "c101", name: "C101 NPF", floor: 1, zone: "C Wing", capacity: 34, type: "Classroom", lightsKw: 0.45, hvacKw: 2.8, x: 206, z: 294, w: 82, d: 58, h: 36 },
+  { id: "c110", name: "C110 NPF", floor: 1, zone: "C Wing", capacity: 38, type: "Classroom", lightsKw: 0.5, hvacKw: 3.1, x: 288, z: 294, w: 82, d: 58, h: 38 },
+  { id: "c115", name: "C115 NLD", floor: 1, zone: "C Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 370, z: 294, w: 82, d: 58, h: 36 },
+  { id: "courtyard", name: "Courtyard", floor: 1, zone: "Central", capacity: 120, type: "Outdoor", lightsKw: 1.1, hvacKw: 0, x: 204, z: 174, w: 248, d: 84, h: 12 },
+  { id: "auditorium", name: "Auditorium", floor: 2, zone: "Mall Area", capacity: 420, type: "Assembly", lightsKw: 5.6, hvacKw: 12.4, x: 452, z: 272, w: 132, d: 86, h: 58 },
+  { id: "cafeteria", name: "Cafeteria", floor: 2, zone: "Mall Area", capacity: 260, type: "Cafeteria", lightsKw: 3.8, hvacKw: 8.6, x: 452, z: 76, w: 94, d: 58, h: 52 },
+  { id: "b201", name: "B201 IMP", floor: 2, zone: "B Wing", capacity: 36, type: "Classroom", lightsKw: 0.5, hvacKw: 3.0, x: 76, z: 116, w: 82, d: 58, h: 40 },
+  { id: "a220", name: "A220 Prep", floor: 2, zone: "A Wing", capacity: 48, type: "Prep Room", lightsKw: 0.66, hvacKw: 3.8, x: 206, z: 76, w: 82, d: 58, h: 38 },
+  { id: "a224", name: "A224 EXTEMP", floor: 2, zone: "A Wing", capacity: 34, type: "Competition", lightsKw: 0.48, hvacKw: 3.0, x: 288, z: 76, w: 82, d: 58, h: 38 }
 ];
 
 const DEFAULT_EVENTS = [];
@@ -23,6 +23,7 @@ const SCHOOL_WEATHER = {
   timezone: "America/New_York"
 };
 const CO2_KG_PER_KWH = 0.385;
+const STORY_HEIGHT = 58;
 
 const state = {
   date: new Date().toISOString().slice(0, 10),
@@ -546,11 +547,17 @@ function saveEvents() {
 }
 
 function roomOptionLabel(room) {
-  return `${room.name} - Floor ${room.floor}`;
+  return `${displayRoomName(room)} - Floor ${room.floor}`;
 }
 
 function roomDetailLabel(room) {
-  return `${room.zone} - ${room.type} - capacity ${room.capacity}`;
+  const fullName = displayRoomName(room) === room.name ? "" : `${room.name} - `;
+  return `${fullName}${room.zone} - ${room.type} - capacity ${room.capacity}`;
+}
+
+function displayRoomName(room) {
+  const roomNumber = room.name.match(/^[A-Z]\d{3}/i);
+  return roomNumber ? roomNumber[0].toUpperCase() : room.name;
 }
 
 function findRoomFromSearch(value, allowFuzzy = false) {
@@ -620,7 +627,9 @@ function renderModel() {
         <span class="floor-wing top-wing"></span>
         <span class="floor-wing left-wing"></span>
         <span class="floor-wing bottom-wing"></span>
-        <span class="floor-wing right-stub"></span>
+        <span class="hallway-label a-hallway">A Hallway</span>
+        <span class="hallway-label b-hallway">B Hallway</span>
+        <span class="hallway-label c-hallway">C Hallway</span>
         <span class="courtyard-cutout">Courtyard</span>
         <span class="floor-label">Floor 1</span>
       </span>
@@ -628,22 +637,22 @@ function renderModel() {
         <span class="floor-wing top-wing"></span>
         <span class="floor-wing left-wing"></span>
         <span class="floor-wing bottom-wing"></span>
-        <span class="floor-wing right-stub"></span>
         <span class="floor-label">Floor 2</span>
       </span>
     `;
     const rooms = ROOMS.map((room) => {
-      const floorZ = (room.floor - 1) * 118;
+      const floorZ = (room.floor - 1) * STORY_HEIGHT;
+      const roomHeight = room.floor === 1 && room.type !== "Outdoor" ? STORY_HEIGHT : room.h;
       return `
       <div class="room-block"
-        style="--x:${room.x}px; --z:${room.z}px; --w:${room.w}px; --d:${room.d}px; --h:${room.h}px; --floor-z:${floorZ}px;"
+        style="--x:${room.x}px; --z:${room.z}px; --w:${room.w}px; --d:${room.d}px; --h:${roomHeight}px; --floor-z:${floorZ}px;"
         data-room-id="${room.id}">
         <span class="room-top"></span>
         <span class="room-front"></span>
         <span class="room-back"></span>
         <span class="room-left"></span>
         <span class="room-side"></span>
-        <button class="room-label" type="button" data-room-id="${room.id}">${room.name}</button>
+        <button class="room-label" type="button" data-room-id="${room.id}">${displayRoomName(room)}</button>
       </div>
     `;
     }).join("");
@@ -1082,6 +1091,16 @@ function bindEvents() {
     const roomHit = event.target.closest("[data-room-id]");
     const roomId = roomHit && roomHit.dataset.roomId;
     if (roomId) selectRoom(roomId);
+  });
+
+  $("#schoolModel").addEventListener("pointerover", (event) => {
+    const label = event.target.closest(".room-label");
+    if (label) label.closest(".room-block").classList.add("hovered");
+  });
+
+  $("#schoolModel").addEventListener("pointerout", (event) => {
+    const block = event.target.closest(".room-block");
+    if (block && !block.contains(event.relatedTarget)) block.classList.remove("hovered");
   });
 
   $("#rotateLeft").addEventListener("click", () => {
