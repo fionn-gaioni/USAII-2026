@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LightsOut | School Energy Planner</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">LO</span>
+          <div>
+            <h1>LightsOut</h1>
+            <p>See which rooms need energy before anyone flips a switch.</p>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <label class="date-control">
+            <span>Plan date</span>
+            <input id="planDate" type="date">
+          </label>
+          <button class="ghost-button" id="resetDemo" type="button">Clear schedule</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="campus-panel" aria-labelledby="mapTitle">
+          <div class="campus-header">
+            <div>
+              <p class="eyebrow">Visual plan</p>
+              <h2 id="mapTitle">3D school energy map</h2>
+            </div>
+            <div class="time-control">
+              <label for="timeSlider">Preview time <strong id="timeReadout"></strong></label>
+              <input id="timeSlider" type="range" min="360" max="1140" step="5">
+            </div>
+            <fieldset class="layer-control" aria-label="Visible energy layers">
+              <legend>Layers</legend>
+              <label class="layer-toggle lights-layer">
+                <input id="layerLights" type="checkbox" checked>
+                <span>Lights</span>
+              </label>
+              <label class="layer-toggle hvac-layer">
+                <input id="layerHvac" type="checkbox" checked>
+                <span>Heat/cooling</span>
+              </label>
+            </fieldset>
+          </div>
+
+          <div class="campus-stage" id="campusStage">
+            <div class="scene-toolbar" aria-label="Model controls">
+              <button class="small-button" id="rotateLeft" type="button">Left</button>
+              <button class="small-button" id="rotateRight" type="button">Right</button>
+              <button class="small-button" id="tiltUp" type="button">Up</button>
+              <button class="small-button" id="tiltDown" type="button">Down</button>
+              <button class="small-button" id="resetView" type="button">Reset view</button>
+            </div>
+            <div class="campus-viewport" aria-label="Rotatable 3D model of the school">
+              <div class="school-model" id="schoolModel"></div>
+            </div>
+            <div class="legend" aria-label="Room status legend">
+              <span><i class="legend-on"></i> On now</span>
+              <span><i class="legend-soon"></i> Needed soon</span>
+              <span><i class="legend-off"></i> Off</span>
+            </div>
+          </div>
+
+          <div class="focus-strip" id="focusStrip"></div>
+        </section>
+
+        <aside class="side-panel" aria-label="Planner controls">
+          <div class="side-section tab-shell">
+            <div class="side-tabs" role="tablist" aria-label="Planner tabs">
+              <button class="side-tab active" id="checklistTab" data-side-tab="checklist" type="button" role="tab" aria-controls="checklistPanel" aria-selected="true">Custodian checklist</button>
+              <button class="side-tab" id="addEvent" data-side-tab="add" type="button" role="tab" aria-controls="addPanel" aria-selected="false">Add club/meeting</button>
+            </div>
+
+            <section class="tab-panel active" id="checklistPanel" role="tabpanel" aria-labelledby="checklistTab">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Output</p>
+                  <h2>Custodian checklist</h2>
+                </div>
+              </div>
+              <div class="kpi-strip" id="kpiStrip"></div>
+              <div class="action-list" id="actionList" aria-live="polite"></div>
+              <div class="model-insights" id="modelInsights" aria-live="polite"></div>
+            </section>
+
+            <section class="tab-panel" id="addPanel" role="tabpanel" aria-labelledby="addEvent">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Input</p>
+                  <h2 id="scheduleTitle">Add club or meeting</h2>
+                </div>
+              </div>
+
+              <form id="eventForm" class="event-form">
+                <input type="hidden" id="editingId">
+                <label>
+                  Activity
+                  <input id="activityName" type="text" placeholder="Robotics practice" required>
+                </label>
+                <label>
+                  Room
+                  <select id="roomSelect" required></select>
+                </label>
+                <div class="form-grid">
+                  <label>
+                    Start
+                    <input id="startTime" type="time" required>
+                  </label>
+                  <label>
+                    End
+                    <input id="endTime" type="time" required>
+                  </label>
+                </div>
+                <div class="form-grid">
+                  <label>
+                    Students
+                    <input id="students" type="number" min="1" max="250" step="1" required>
+                  </label>
+                  <label>
+                    Priority
+                    <select id="priority">
+                      <option value="normal">Normal</option>
+                      <option value="exam">Exam/event</option>
+                      <option value="athletics">Athletics</option>
+                      <option value="admin">Staff/admin</option>
+                    </select>
+                  </label>
+                </div>
+                <fieldset class="needs">
+                  <legend>Needed systems</legend>
+                  <label><input id="needLights" type="checkbox" checked> Lights</label>
+                  <label><input id="needHvac" type="checkbox" checked> Heat/cooling</label>
+                  <label><input id="needProjector" type="checkbox"> Projector</label>
+                </fieldset>
+                <div class="form-actions">
+                  <button id="saveEvent" type="submit">Save</button>
+                  <button id="cancelEdit" class="ghost-button" type="button">Cancel</button>
+                </div>
+              </form>
+            </section>
+          </div>
+
+          <div class="side-section">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Schedule</p>
+                <h2>Activities</h2>
+              </div>
+            </div>
+            <div class="schedule-list" id="scheduleList" aria-live="polite"></div>
+          </div>
+
+          <div class="assumption-box">
+            <h3>Responsible AI check</h3>
+            <p><strong>Risk:</strong> estimates can be wrong if room equipment or weather differs from the assumptions.</p>
+            <p><strong>Mitigation:</strong> the app shows assumptions and confidence instead of hiding uncertainty.</p>
+            <p><strong>Human control:</strong> custodians decide what actually turns on or off.</p>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <template id="emptyStateTemplate">
+      <div class="empty-state">
+        <p>No activities are scheduled for this date.</p>
+      </div>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
