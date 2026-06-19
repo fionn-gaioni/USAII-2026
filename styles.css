@@ -274,6 +274,233 @@ h3 {
   background: var(--green-dark);
 }
 
+.lightup-room {
+  position: relative;
+  height: 190px;
+  overflow: hidden;
+  border: 1px solid rgba(23, 32, 28, 0.12);
+  border-radius: 8px;
+  background: #111820;
+  box-shadow: inset 0 -28px 0 rgba(0, 0, 0, 0.16);
+  animation: roomBrighten 2800ms ease-out 420ms both;
+}
+
+.cartoon-wall,
+.cartoon-floor,
+.cartoon-glow,
+.cartoon-light,
+.cartoon-desk,
+.cartoon-window,
+.cartoon-switch {
+  position: absolute;
+  display: block;
+}
+
+.cartoon-wall {
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(180deg, #151f2a, #10171f);
+  background-size: 34px 34px, 34px 34px, auto;
+  animation: wallWake 2800ms ease-out 420ms both;
+}
+
+.cartoon-floor {
+  left: -20px;
+  right: -20px;
+  bottom: -26px;
+  height: 76px;
+  border-radius: 50% 50% 0 0;
+  background: #1c2b28;
+  animation: floorWake 2800ms ease-out 420ms both;
+}
+
+.cartoon-light {
+  left: 50%;
+  top: 16px;
+  width: 62px;
+  height: 20px;
+  border-radius: 0 0 18px 18px;
+  background: #4a5560;
+  transform: translateX(-50%);
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12);
+  animation: fixtureWake 2800ms ease-out 420ms both;
+}
+
+.cartoon-light::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -16px;
+  width: 3px;
+  height: 18px;
+  background: #5b6873;
+  transform: translateX(-50%);
+}
+
+.cartoon-glow {
+  left: 50%;
+  top: 28px;
+  width: 190px;
+  height: 150px;
+  border-radius: 0 0 48% 48%;
+  background: radial-gradient(circle at 50% 0, rgba(255, 221, 111, 0.86), rgba(255, 221, 111, 0.22) 48%, transparent 72%);
+  opacity: 0;
+  transform: translateX(-50%) scaleY(0.45);
+  transform-origin: top;
+  animation: lightCone 2800ms cubic-bezier(.2, .8, .2, 1) 420ms both;
+}
+
+.cartoon-desk {
+  left: 58px;
+  bottom: 34px;
+  width: 128px;
+  height: 44px;
+  border-radius: 8px 8px 5px 5px;
+  background: #30413b;
+  box-shadow: inset 0 -10px 0 rgba(0, 0, 0, 0.12);
+  animation: deskWake 2800ms ease-out 420ms both;
+}
+
+.cartoon-desk::before,
+.cartoon-desk::after {
+  content: "";
+  position: absolute;
+  bottom: -34px;
+  width: 10px;
+  height: 34px;
+  border-radius: 5px;
+  background: #25342f;
+}
+
+.cartoon-desk::before {
+  left: 18px;
+}
+
+.cartoon-desk::after {
+  right: 18px;
+}
+
+.cartoon-window {
+  right: 54px;
+  top: 56px;
+  width: 82px;
+  height: 58px;
+  border: 5px solid #273644;
+  border-radius: 7px;
+  background:
+    linear-gradient(90deg, transparent 47%, rgba(255, 255, 255, 0.45) 47% 53%, transparent 53%),
+    linear-gradient(transparent 47%, rgba(255, 255, 255, 0.45) 47% 53%, transparent 53%),
+    #1c384e;
+  animation: windowWake 2800ms ease-out 420ms both;
+}
+
+.cartoon-switch {
+  right: 34px;
+  bottom: 58px;
+  width: 28px;
+  height: 44px;
+  border: 3px solid #5d6871;
+  border-radius: 8px;
+  background: #1a222b;
+  animation: switchPlateWake 2800ms ease-out 420ms both;
+}
+
+.cartoon-switch i {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  width: 6px;
+  height: 22px;
+  border-radius: 999px;
+  background: #8b949b;
+  transform: translateX(-50%) rotate(15deg);
+  transform-origin: 50% 85%;
+  animation: switchFlip 2800ms cubic-bezier(.18, .9, .18, 1) 420ms both;
+}
+
+@keyframes roomBrighten {
+  0%, 42% { background-color: #101820; }
+  58% { background-color: #263b42; }
+  100% { background-color: #eaf5ef; }
+}
+
+@keyframes wallWake {
+  0%, 42% { filter: brightness(0.55) saturate(0.8); }
+  60% { filter: brightness(1.2) saturate(1.15); }
+  100% { filter: brightness(1) saturate(1); }
+}
+
+@keyframes floorWake {
+  0%, 42% { background: #14201e; }
+  100% { background: #bddfd0; }
+}
+
+@keyframes fixtureWake {
+  0%, 42% {
+    background: #4a5560;
+    box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12);
+  }
+  54%, 100% {
+    background: #ffe08a;
+    box-shadow: 0 0 22px rgba(255, 208, 84, 0.72), inset 0 -4px 0 rgba(165, 118, 23, 0.14);
+  }
+}
+
+@keyframes lightCone {
+  0%, 42% {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(0.35);
+  }
+  56% {
+    opacity: 1;
+    transform: translateX(-50%) scaleY(1.06);
+  }
+  100% {
+    opacity: 0.82;
+    transform: translateX(-50%) scaleY(1);
+  }
+}
+
+@keyframes deskWake {
+  0%, 42% { background: #30413b; transform: translateY(10px); }
+  100% { background: #6da886; transform: translateY(0); }
+}
+
+@keyframes windowWake {
+  0%, 42% {
+    border-color: #273644;
+    background-color: #1c384e;
+  }
+  100% {
+    border-color: #ffffff;
+    background-color: #8fd4ff;
+  }
+}
+
+@keyframes switchPlateWake {
+  0%, 42% {
+    border-color: #5d6871;
+    background: #1a222b;
+  }
+  100% {
+    border-color: #ffffff;
+    background: #f8fbf9;
+  }
+}
+
+@keyframes switchFlip {
+  0%, 38% {
+    background: #8b949b;
+    transform: translateX(-50%) rotate(15deg);
+  }
+  48%, 100% {
+    background: #1f8555;
+    transform: translateX(-50%) rotate(-15deg);
+  }
+}
+
 .preview-map {
   position: relative;
   height: 270px;
@@ -1517,6 +1744,18 @@ label {
     height: 220px;
   }
 
+  .lightup-room {
+    height: 168px;
+  }
+
+  .cartoon-desk {
+    left: 36px;
+  }
+
+  .cartoon-window {
+    right: 38px;
+  }
+
   .preview-stats {
     grid-template-columns: 1fr;
   }
@@ -1560,5 +1799,20 @@ label {
   .action-card {
     display: grid;
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lightup-room,
+  .cartoon-wall,
+  .cartoon-floor,
+  .cartoon-glow,
+  .cartoon-light,
+  .cartoon-desk,
+  .cartoon-window,
+  .cartoon-switch,
+  .cartoon-switch i {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
   }
 }
