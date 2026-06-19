@@ -7,10 +7,42 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <div class="app-shell">
+    <section class="home-screen" id="homeScreen" aria-labelledby="homeTitle">
+      <div class="home-content">
+        <div class="home-copy">
+          <div class="home-logo" aria-hidden="true">
+            <span class="brand-mark logo-mark"></span>
+            <span>LightsOut</span>
+          </div>
+          <p class="eyebrow">School energy planner</p>
+          <h1 id="homeTitle">Turn rooms on only when they are actually needed.</h1>
+          <p class="home-description">LightsOut helps schools schedule clubs, meetings, rooms, lights, and heating/cooling so custodians can prep the right spaces and avoid wasted energy.</p>
+          <a id="enterApp" class="home-cta" href="#plannerStart">Use planner</a>
+        </div>
+        <div class="home-preview" aria-label="App preview">
+          <div class="preview-topline">
+            <span></span>
+            <strong>Today</strong>
+          </div>
+          <div class="preview-map">
+            <span class="preview-room room-a"></span>
+            <span class="preview-room room-b"></span>
+            <span class="preview-room room-c"></span>
+            <span class="preview-room room-d"></span>
+          </div>
+          <div class="preview-stats">
+            <span><strong>4</strong> rooms planned</span>
+            <span><strong>2.8 kg</strong> CO2 saved</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="plannerStart" class="planner-anchor" aria-hidden="true"></div>
+    <div class="app-shell" id="appShell">
       <header class="topbar">
         <div class="brand">
-          <span class="brand-mark" aria-hidden="true">LO</span>
+          <span class="brand-mark logo-mark" aria-hidden="true"></span>
           <div>
             <h1>LightsOut</h1>
             <p>See which rooms need energy before anyone flips a switch.</p>
@@ -78,23 +110,20 @@
             </div>
 
             <section class="tab-panel active" id="checklistPanel" role="tabpanel" aria-labelledby="checklistTab">
-              <div class="section-heading">
-                <div>
-                  <p class="eyebrow">Output</p>
-                  <h2>Custodian checklist</h2>
-                </div>
+              <div class="panel-header">
+                <p class="eyebrow">Output</p>
+                <h2>Custodian checklist</h2>
               </div>
               <div class="kpi-strip" id="kpiStrip"></div>
+              <div class="weather-panel" id="weatherPanel" aria-live="polite"></div>
               <div class="action-list" id="actionList" aria-live="polite"></div>
               <div class="model-insights" id="modelInsights" aria-live="polite"></div>
             </section>
 
             <section class="tab-panel" id="addPanel" role="tabpanel" aria-labelledby="addEvent">
-              <div class="section-heading">
-                <div>
-                  <p class="eyebrow">Input</p>
-                  <h2 id="scheduleTitle">Add club or meeting</h2>
-                </div>
+              <div class="panel-header">
+                <p class="eyebrow">Input</p>
+                <h2 id="scheduleTitle">Add club or meeting</h2>
               </div>
 
               <form id="eventForm" class="event-form">
@@ -103,10 +132,13 @@
                   Activity
                   <input id="activityName" type="text" placeholder="Robotics practice" required>
                 </label>
-                <label>
-                  Room
-                  <select id="roomSelect" required></select>
-                </label>
+                <div class="room-picker">
+                  <label for="roomSearch">Room</label>
+                  <input id="roomSearch" type="search" list="roomList" placeholder="Search rooms" autocomplete="off" required>
+                  <input id="roomSelect" type="hidden">
+                  <datalist id="roomList"></datalist>
+                  <p class="field-hint" id="roomHint"></p>
+                </div>
                 <div class="form-grid">
                   <label>
                     Start
@@ -146,12 +178,10 @@
             </section>
           </div>
 
-          <div class="side-section">
-            <div class="section-heading">
-              <div>
-                <p class="eyebrow">Schedule</p>
-                <h2>Activities</h2>
-              </div>
+          <div class="side-section schedule-section">
+            <div class="panel-header">
+              <p class="eyebrow">Schedule</p>
+              <h2>Activities</h2>
             </div>
             <div class="schedule-list" id="scheduleList" aria-live="polite"></div>
           </div>
@@ -172,6 +202,12 @@
       </div>
     </template>
 
+    <script>
+      document.getElementById("enterApp").addEventListener("click", function () {
+        document.getElementById("homeScreen").classList.add("is-hidden");
+        document.getElementById("appShell").scrollIntoView();
+      });
+    </script>
     <script src="app.js"></script>
   </body>
 </html>

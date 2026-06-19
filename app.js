@@ -16,6 +16,13 @@ const ROOMS = [
 ];
 
 const DEFAULT_EVENTS = [];
+const SCHOOL_WEATHER = {
+  name: "Ardrey Kell HS",
+  latitude: 35.033,
+  longitude: -80.817,
+  timezone: "America/New_York"
+};
+const CO2_KG_PER_KWH = 0.385;
 
 const state = {
   date: new Date().toISOString().slice(0, 10),
@@ -29,6 +36,14 @@ const state = {
     hvac: true
   },
   activeSideTab: "checklist",
+  weather: {
+    status: "loading",
+    source: "offline",
+    currentTemp: null,
+    hourly: [],
+    updatedAt: null,
+    error: ""
+  },
   dragging: false,
   dragMoved: false,
   wasDragClick: false,
@@ -36,6 +51,8 @@ const state = {
   dragStartY: 0,
   dragStartRotation: -36,
   dragStartPitch: 60,
+  framePending: false,
+  renderPending: false,
   modelBuilt: false
 };
 
@@ -80,6 +97,10 @@ function formatTime(time) {
   }).format(new Date(`${state.date}T${time}:00`));
 }
 
+function formatDateKey(date = state.date) {
+  return date;
+}
+
 function getRoom(roomId) {
   return ROOMS.find((room) => room.id === roomId);
 }
@@ -104,6 +125,141 @@ function getLayerNeed(event, layer) {
 
 function getSystemsForEvent(event) {
   return getEnabledLayers().filter((layer) => getLayerNeed(event, layer));
+}
+
+async function loadWeatherForecast() {
+  const cached = readCachedWeather();
+  if (cached) {
+    state.weather = cached;
+    renderWeatherDependentPanels();
+  }
+
+  const params = new URLSearchParams({
+    latitude: SCHOOL_WEATHER.latitude,
+    longitude: SCHOOL_WEATHER.longitude,
+    hourly: "temperature_2m,apparent_temperature",
+    current: "temperature_2m,apparent_temperature",
+    temperature_unit: "fahrenheit",
+    timezone: SCHOOL_WEATHER.timezone,
+    forecast_days: "7"
+  });
+
+  try {
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`, {
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error(`Weather request failed: ${response.status}`);
+    const data = await response.json();
+    const hourly = (data.hourly?.time || []).map((time, index) => ({
+      time,
+      temp: data.hourly.temperature_2m[index],
+      apparent: data.hourly.apparent_temperature[index]
+    })).filter((item) => Number.isFinite(item.temp));
+    state.weather = {
+      status: "ready",
+      source: "Open-Meteo",
+      currentTemp: data.current?.temperature_2m ?? hourly[0]?.temp ?? null,
+      hourly,
+      updatedAt: new Date().toISOString(),
+      error: ""
+    };
+    localStorage.setItem("lightsout:weather", JSON.stringify(state.weather));
+  } catch (error) {
+    state.weather = cached || {
+      status: "offline",
+      source: "offline estimate",
+      currentTemp: null,
+      hourly: [],
+      updatedAt: null,
+      error: error.message
+    };
+  }
+  renderWeatherDependentPanels();
+}
+
+function readCachedWeather() {
+  try {
+    const raw = localStorage.getItem("lightsout:weather");
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    const ageMs = Date.now() - new Date(cached.updatedAt).getTime();
+    if (!Number.isFinite(ageMs) || ageMs > 1000 * 60 * 60 * 6) return null;
+    return { ...cached, status: "cached" };
+  } catch {
+    return null;
+  }
+}
+
+function getOutdoorTempAt(time) {
+  if (!state.weather.hourly.length) return null;
+  const target = new Date(`${formatDateKey()}T${time}:00`).getTime();
+  let closest = null;
+  state.weather.hourly.forEach((entry) => {
+    const entryTime = new Date(entry.time).getTime();
+    const diff = Math.abs(entryTime - target);
+    if (!closest || diff < closest.diff) closest = { ...entry, diff };
+  });
+  return closest && closest.diff <= 1000 * 60 * 90 ? closest : null;
+}
+
+function getHvacPlan(event, room = getRoom(event.roomId)) {
+  if (!event.needs.hvac || room.hvacKw <= 0) {
+    return { lead: 0, stopDelay: 0, temp: null, mode: "none", confidence: "High", reason: "No HVAC requested." };
+  }
+  const forecast = getOutdoorTempAt(event.start);
+  const temp = forecast?.apparent ?? forecast?.temp ?? null;
+  const largeRoom = room.capacity >= 120;
+  const highLoad = Number(event.students) / Math.max(1, room.capacity) > 0.65;
+  let lead = 30;
+  let stopDelay = 10;
+  let mode = "standard";
+  let confidence = state.weather.status === "ready" || state.weather.status === "cached" ? "High" : "Medium";
+  let reason = "Using offline default HVAC warm-up.";
+
+  if (Number.isFinite(temp)) {
+    if (temp <= 38) {
+      lead = 60;
+      stopDelay = 15;
+      mode = "heating";
+      reason = `${Math.round(temp)} F apparent temperature requires a longer heating warm-up.`;
+    } else if (temp <= 52) {
+      lead = 50;
+      stopDelay = 12;
+      mode = "heating";
+      reason = `${Math.round(temp)} F apparent temperature suggests early heating.`;
+    } else if (temp <= 64) {
+      lead = 35;
+      stopDelay = 8;
+      mode = "heating";
+      reason = `${Math.round(temp)} F is mild-cool, so moderate warm-up is enough.`;
+    } else if (temp < 76) {
+      lead = 20;
+      stopDelay = 5;
+      mode = "ventilation";
+      reason = `${Math.round(temp)} F is near comfort range; minimize preconditioning.`;
+    } else if (temp < 86) {
+      lead = 40;
+      stopDelay = 12;
+      mode = "cooling";
+      reason = `${Math.round(temp)} F apparent temperature suggests cooling prep.`;
+    } else {
+      lead = 55;
+      stopDelay = 15;
+      mode = "cooling";
+      reason = `${Math.round(temp)} F apparent temperature requires a longer cooling lead.`;
+    }
+  }
+
+  if (largeRoom) lead += 10;
+  if (highLoad) lead += 5;
+  return {
+    lead: clamp(lead, 15, 75),
+    stopDelay,
+    temp,
+    mode,
+    confidence,
+    reason
+  };
 }
 
 function eventsForRoom(roomId) {
@@ -157,7 +313,7 @@ function getRoomLayerState(roomId) {
 function calculateEventImpact(event) {
   const room = getRoom(event.roomId);
   const kwh = energyModel ? predictEnergyKwh(event, room).kwh : estimateEnergyFormula(event, room);
-  return { kwh, co2: kwh * 0.385 };
+  return { kwh, co2: kwh * CO2_KG_PER_KWH };
 }
 
 function estimateEnergyFormula(event, room) {
@@ -273,18 +429,70 @@ function predictEnergyKwh(event, room = getRoom(event.roomId)) {
   return { kwh, confidence, spread };
 }
 
+function getRoomMoveRecommendations() {
+  return state.events.map((event) => {
+    const room = getRoom(event.roomId);
+    const current = predictEnergyKwh(event, room).kwh;
+    const alternate = ROOMS
+      .filter((candidate) => candidate.id !== room.id)
+      .filter((candidate) => candidate.floor === room.floor)
+      .filter((candidate) => candidate.capacity >= Number(event.students))
+      .filter((candidate) => candidate.capacity <= Math.max(Number(event.students) * 2.4, 34))
+      .map((candidate) => {
+        const moved = { ...event, roomId: candidate.id };
+        return { room: candidate, kwh: predictEnergyKwh(moved, candidate).kwh };
+      })
+      .sort((a, b) => a.kwh - b.kwh)[0];
+    if (!alternate) return null;
+    const savingsKwh = current - alternate.kwh;
+    return {
+      event,
+      currentRoom: room,
+      alternateRoom: alternate.room,
+      savingsKwh,
+      savingsCo2: savingsKwh * CO2_KG_PER_KWH
+    };
+  }).filter(Boolean).sort((a, b) => b.savingsKwh - a.savingsKwh);
+}
+
+function estimateTimingSavingsKwh(event, room = getRoom(event.roomId)) {
+  const avoidedRunHours = 15 / 60;
+  const lighting = event.needs.lights ? room.lightsKw * avoidedRunHours : 0;
+  const hvac = event.needs.hvac ? room.hvacKw * avoidedRunHours : 0;
+  const projector = event.needs.projector ? 0.28 * avoidedRunHours : 0;
+  return lighting + hvac + projector;
+}
+
+function estimateAiSavings() {
+  const moveRecommendations = getRoomMoveRecommendations().filter((candidate) => candidate.savingsKwh > 0.8);
+  const moveKwh = moveRecommendations.reduce((sum, candidate) => sum + candidate.savingsKwh, 0);
+  const timingKwh = state.events.reduce((sum, event) => sum + estimateTimingSavingsKwh(event), 0);
+  const totalKwh = moveKwh + timingKwh;
+  return {
+    moveRecommendations,
+    moveKwh,
+    timingKwh,
+    totalKwh,
+    moveCo2: moveKwh * CO2_KG_PER_KWH,
+    timingCo2: timingKwh * CO2_KG_PER_KWH,
+    totalCo2: totalKwh * CO2_KG_PER_KWH
+  };
+}
+
 function analyzeSchedule() {
   const activeRoomIds = new Set(state.events.map((event) => event.roomId));
   const totalKwh = state.events.reduce((sum, event) => sum + calculateEventImpact(event).kwh, 0);
   const lightsOnNow = ROOMS.filter((room) => getRoomStatus(room.id) === "on").length;
   const neededSoon = ROOMS.filter((room) => getRoomStatus(room.id) === "soon").length;
   const actions = buildActions();
+  const aiSavings = estimateAiSavings();
   return {
     activeRooms: activeRoomIds.size,
     layerRoomsNow: lightsOnNow,
     neededSoon,
     totalKwh,
-    totalCo2: totalKwh * 0.385,
+    totalCo2: totalKwh * CO2_KG_PER_KWH,
+    aiSavings,
     actions
   };
 }
@@ -296,23 +504,27 @@ function buildActions() {
     const systems = getSystemsForEvent(event);
     if (!systems.length) return;
     const systemText = systems.map((system) => system === "hvac" ? "heat/cooling" : "lights").join(", ");
-    const prepLead = systems.includes("hvac") ? 30 : 10;
+    const hvacPlan = getHvacPlan(event, room);
+    const prepLead = systems.includes("hvac") ? hvacPlan.lead : 10;
     const prediction = predictEnergyKwh(event, room);
+    const weatherText = systems.includes("hvac") ? ` ${hvacPlan.reason}` : "";
 
     actions.push({
       time: timeFromMinutes(minutes(event.start) - prepLead),
       sort: minutes(event.start) - prepLead,
       title: `Prep ${room.name}`,
-      detail: `${event.name}: ${systemText} for ${event.students} students. AI estimate: ${prediction.kwh.toFixed(1)} kWh.`,
-      confidence: prediction.confidence,
+      detail: `${event.name}: ${systemText} for ${event.students} students. AI estimate: ${prediction.kwh.toFixed(1)} kWh.${weatherText}`,
+      confidence: systems.includes("hvac") ? hvacPlan.confidence : prediction.confidence,
       status: "Start"
     });
 
     actions.push({
-      time: timeFromMinutes(minutes(event.end) + 10),
-      sort: minutes(event.end) + 10,
-      title: `Turn off ${room.name}`,
-      detail: `${event.name} ends at ${formatTime(event.end)}. Check that the room is empty first.`,
+      time: timeFromMinutes(minutes(event.end) + (systems.includes("hvac") ? hvacPlan.stopDelay : 10)),
+      sort: minutes(event.end) + (systems.includes("hvac") ? hvacPlan.stopDelay : 10),
+      title: systems.includes("hvac") ? `Set back ${room.name}` : `Turn off ${room.name}`,
+      detail: systems.includes("hvac")
+        ? `${event.name} ends at ${formatTime(event.end)}. Set HVAC back after ${hvacPlan.stopDelay} minutes if the room is empty.`
+        : `${event.name} ends at ${formatTime(event.end)}. Check that the room is empty first.`,
       confidence: "High",
       status: "Stop"
     });
@@ -333,10 +545,70 @@ function saveEvents() {
   localStorage.setItem(storageKey(), JSON.stringify(state.events));
 }
 
+function roomOptionLabel(room) {
+  return `${room.name} - Floor ${room.floor}`;
+}
+
+function roomDetailLabel(room) {
+  return `${room.zone} - ${room.type} - capacity ${room.capacity}`;
+}
+
+function findRoomFromSearch(value, allowFuzzy = false) {
+  const query = value.trim().toLowerCase();
+  if (!query) return null;
+  const exact = ROOMS.find((room) => {
+    const options = [
+      roomOptionLabel(room),
+      room.name,
+      room.id,
+      `${room.name} floor ${room.floor}`
+    ].map((item) => item.toLowerCase());
+    return options.includes(query);
+  });
+  if (exact || !allowFuzzy) return exact || null;
+  const matches = ROOMS.filter((room) => {
+    return roomOptionLabel(room).toLowerCase().includes(query)
+      || room.zone.toLowerCase().includes(query)
+      || room.type.toLowerCase().includes(query);
+  });
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function updateRoomHint(room, isError = false) {
+  const hint = $("#roomHint");
+  hint.textContent = room ? roomDetailLabel(room) : "Search by room name, wing, or space type.";
+  hint.classList.toggle("is-error", isError);
+}
+
+function setRoomPicker(roomId) {
+  const room = getRoom(roomId);
+  if (!room) return;
+  $("#roomSelect").value = room.id;
+  $("#roomSearch").value = roomOptionLabel(room);
+  $("#roomSearch").setCustomValidity("");
+  updateRoomHint(room);
+}
+
+function resolveRoomSearch(allowFuzzy = false) {
+  const input = $("#roomSearch");
+  const room = findRoomFromSearch(input.value, allowFuzzy);
+  if (room) {
+    state.selectedRoomId = room.id;
+    setRoomPicker(room.id);
+    return true;
+  }
+  $("#roomSelect").value = "";
+  input.setCustomValidity("Choose a room from the search results.");
+  updateRoomHint(null, true);
+  $("#roomHint").textContent = "Choose one matching room from the search results.";
+  return false;
+}
+
 function renderRoomOptions() {
-  $("#roomSelect").innerHTML = ROOMS.map((room) => {
-    return `<option value="${room.id}">${room.name} - Floor ${room.floor} - ${room.type} - cap ${room.capacity}</option>`;
+  $("#roomList").innerHTML = ROOMS.map((room) => {
+    return `<option value="${roomOptionLabel(room)}"></option>`;
   }).join("");
+  setRoomPicker(state.selectedRoomId);
 }
 
 function renderModel() {
@@ -424,6 +696,25 @@ function renderKpis(analysis) {
     <div class="kpi"><span>On now</span><strong>${analysis.layerRoomsNow}</strong></div>
     <div class="kpi"><span>Soon</span><strong>${analysis.neededSoon}</strong></div>
     <div class="kpi"><span>CO2</span><strong>${analysis.totalCo2.toFixed(1)} kg</strong></div>
+    <div class="kpi kpi-savings"><span>AI saved</span><strong>${analysis.aiSavings.totalCo2.toFixed(1)} kg</strong></div>
+  `;
+}
+
+function renderWeatherPanel() {
+  const status = state.weather.status;
+  const temp = Number.isFinite(state.weather.currentTemp) ? `${Math.round(state.weather.currentTemp)} F` : "Offline";
+  const source = status === "ready" ? state.weather.source : status === "cached" ? "cached forecast" : "offline fallback";
+  const detail = status === "offline"
+    ? "Using default HVAC lead times until weather is available."
+    : `Using ${source} for weather-aware HVAC warm-up and setback timing.`;
+  $("#weatherPanel").innerHTML = `
+    <article class="weather-card ${status === "offline" ? "offline" : ""}">
+      <div>
+        <span>Outdoor weather</span>
+        <strong>${temp}</strong>
+      </div>
+      <p>${detail}</p>
+    </article>
   `;
 }
 
@@ -456,35 +747,23 @@ function buildModelInsights(analysis) {
   }];
 
   if (!state.events.length) {
-    insights.push({
-      title: "Ready for a real schedule",
-      detail: "Add a club or meeting and the model will estimate energy, flag low-occupancy rooms, and suggest room moves.",
-      tone: "green"
-    });
+    insights[0].detail += " Add a club or meeting and it will estimate energy, flag low-occupancy rooms, and suggest room moves.";
     return insights;
   }
 
-  const moveCandidates = state.events.map((event) => {
-    const room = getRoom(event.roomId);
-    const current = predictEnergyKwh(event, room).kwh;
-    const alternate = ROOMS
-      .filter((candidate) => candidate.id !== room.id)
-      .filter((candidate) => candidate.floor === room.floor)
-      .filter((candidate) => candidate.capacity >= Number(event.students))
-      .filter((candidate) => candidate.capacity <= Math.max(Number(event.students) * 2.4, 34))
-      .map((candidate) => {
-        const moved = { ...event, roomId: candidate.id };
-        return { room: candidate, kwh: predictEnergyKwh(moved, candidate).kwh };
-      })
-      .sort((a, b) => a.kwh - b.kwh)[0];
-    return alternate ? { event, currentRoom: room, alternateRoom: alternate.room, savings: current - alternate.kwh } : null;
-  }).filter(Boolean).sort((a, b) => b.savings - a.savings);
+  if (analysis.aiSavings.totalKwh > 0) {
+    insights.push({
+      title: "AI CO2 savings estimate",
+      detail: `Following the timing checklist and room recommendations could avoid about ${analysis.aiSavings.totalCo2.toFixed(1)} kg CO2 (${analysis.aiSavings.totalKwh.toFixed(1)} kWh): ${analysis.aiSavings.timingCo2.toFixed(1)} kg from cleaner shutoff timing and ${analysis.aiSavings.moveCo2.toFixed(1)} kg from room choices.`,
+      tone: "green"
+    });
+  }
 
-  const bestMove = moveCandidates.find((candidate) => candidate.savings > 0.8);
+  const bestMove = analysis.aiSavings.moveRecommendations[0];
   if (bestMove) {
     insights.push({
       title: `Move ${bestMove.event.name} to ${bestMove.alternateRoom.name}`,
-      detail: `${bestMove.currentRoom.name} is oversized for ${bestMove.event.students} students. Same-floor move could save about ${bestMove.savings.toFixed(1)} kWh.`,
+      detail: `${bestMove.currentRoom.name} is oversized for ${bestMove.event.students} students. Same-floor move could save about ${bestMove.savingsKwh.toFixed(1)} kWh / ${bestMove.savingsCo2.toFixed(1)} kg CO2.`,
       tone: "amber"
     });
   }
@@ -524,6 +803,14 @@ function renderModelInsights(analysis) {
       <p>${insight.detail}</p>
     </article>
   `).join("");
+}
+
+function renderWeatherDependentPanels() {
+  const analysis = analyzeSchedule();
+  renderKpis(analysis);
+  renderWeatherPanel();
+  renderActions(analysis.actions);
+  renderModelInsights(analysis);
 }
 
 function renderScheduleList() {
@@ -570,15 +857,25 @@ function render() {
   renderModel();
   renderFocusStrip();
   renderKpis(analysis);
+  renderWeatherPanel();
   renderActions(analysis.actions);
   renderModelInsights(analysis);
   renderScheduleList();
 }
 
+function requestRender() {
+  if (state.renderPending) return;
+  state.renderPending = true;
+  window.requestAnimationFrame(() => {
+    state.renderPending = false;
+    render();
+  });
+}
+
 function resetForm() {
   $("#editingId").value = "";
   $("#activityName").value = "";
-  $("#roomSelect").value = state.selectedRoomId;
+  setRoomPicker(state.selectedRoomId);
   $("#startTime").value = "15:30";
   $("#endTime").value = "16:30";
   $("#students").value = "20";
@@ -594,7 +891,7 @@ function fillForm(event) {
   state.selectedRoomId = event.roomId;
   $("#editingId").value = event.id;
   $("#activityName").value = event.name;
-  $("#roomSelect").value = event.roomId;
+  setRoomPicker(event.roomId);
   $("#startTime").value = event.start;
   $("#endTime").value = event.end;
   $("#students").value = event.students;
@@ -608,7 +905,7 @@ function fillForm(event) {
 
 function selectRoom(roomId) {
   state.selectedRoomId = roomId;
-  $("#roomSelect").value = roomId;
+  setRoomPicker(roomId);
   render();
 }
 
@@ -659,7 +956,7 @@ function bindEvents() {
 
   $("#timeSlider").addEventListener("input", (event) => {
     state.previewMinute = Number(event.target.value);
-    render();
+    requestRender();
   });
 
   $("#layerLights").addEventListener("change", (event) => {
@@ -676,7 +973,7 @@ function bindEvents() {
 
   $("#resetDemo").addEventListener("click", () => {
     state.events = cloneDefaultEvents().map((event) => ({ ...event, id: createId() }));
-    state.selectedRoomId = "media";
+    state.selectedRoomId = "courtyard";
     state.previewMinute = 7 * 60 + 45;
     state.layers = { lights: true, hvac: true };
     state.rotation = -36;
@@ -702,13 +999,29 @@ function bindEvents() {
     setSideTab("checklist");
   });
 
-  $("#roomSelect").addEventListener("change", (event) => {
-    state.selectedRoomId = event.target.value;
+  $("#roomSearch").addEventListener("input", () => {
+    const room = findRoomFromSearch($("#roomSearch").value);
+    if (!room) {
+      $("#roomSelect").value = "";
+      $("#roomSearch").setCustomValidity("");
+      updateRoomHint(null);
+      return;
+    }
+    state.selectedRoomId = room.id;
+    setRoomPicker(room.id);
     render();
+  });
+
+  $("#roomSearch").addEventListener("blur", () => {
+    resolveRoomSearch(true);
   });
 
   $("#eventForm").addEventListener("submit", (event) => {
     event.preventDefault();
+    if (!resolveRoomSearch(true)) {
+      $("#roomSearch").reportValidity();
+      return;
+    }
     const start = $("#startTime").value;
     const end = $("#endTime").value;
     if (minutes(end) <= minutes(start)) {
@@ -826,7 +1139,13 @@ function bindEvents() {
     if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) state.dragMoved = true;
     state.rotation = state.dragStartRotation - deltaX * 0.28;
     state.pitch = clamp(state.dragStartPitch - deltaY * 0.08, 46, 72);
-    updateModelTransform();
+    if (!state.framePending) {
+      state.framePending = true;
+      window.requestAnimationFrame(() => {
+        state.framePending = false;
+        updateModelTransform();
+      });
+    }
   });
 
   viewport.addEventListener("pointerup", () => {
@@ -853,6 +1172,7 @@ function init() {
   resetForm();
   bindEvents();
   render();
+  loadWeatherForecast();
 }
 
 init();
