@@ -159,9 +159,61 @@ h3 {
 .home-cta {
   display: inline-grid;
   place-items: center;
-  justify-self: start;
   min-width: 154px;
   min-height: 46px;
+}
+
+.home-actions {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
+.home-more-info {
+  width: min(560px, 100%);
+}
+
+.home-more-info summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #cfded6;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--green-dark);
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  list-style: none;
+}
+
+.home-more-info summary::-webkit-details-marker {
+  display: none;
+}
+
+.home-more-info > div {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.home-more-info article {
+  padding: 11px 12px;
+  border: 1px solid rgba(23, 32, 28, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.home-more-info h2 {
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.home-more-info p {
+  color: #4f5d56;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .home-preview {
@@ -610,9 +662,7 @@ input[type="range"] {
   height: 78px;
 }
 
-.floor-label,
-.courtyard-cutout,
-.hallway-label {
+.floor-label {
   position: absolute;
   padding: 4px 8px;
   border-radius: 999px;
@@ -626,34 +676,6 @@ input[type="range"] {
 .floor-label {
   left: 58px;
   top: 322px;
-}
-
-.courtyard-cutout {
-  left: 276px;
-  top: 204px;
-  color: rgba(255, 255, 255, 0.68);
-  background: rgba(0, 0, 0, 0.5);
-}
-
-.hallway-label {
-  color: rgba(255, 255, 255, 0.78);
-  background: rgba(4, 9, 13, 0.58);
-  font-size: 11px;
-}
-
-.a-hallway {
-  left: 302px;
-  top: 142px;
-}
-
-.b-hallway {
-  left: 70px;
-  top: 246px;
-}
-
-.c-hallway {
-  left: 146px;
-  top: 262px;
 }
 
 .floor-one {
@@ -1161,15 +1183,6 @@ label {
   margin-top: 4px;
   font-size: 18px;
   line-height: 1.05;
-}
-
-.kpi-savings {
-  border-color: #cfe7d9;
-  background: #f2fbf5;
-}
-
-.kpi-savings strong {
-  color: var(--green-dark);
 }
 
 .action-list,

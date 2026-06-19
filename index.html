@@ -17,7 +17,22 @@
           <p class="eyebrow">School energy planner</p>
           <h1 id="homeTitle">Turn rooms on only when they are actually needed.</h1>
           <p class="home-description">LightsOut helps schools schedule clubs, meetings, rooms, lights, and heating/cooling so custodians can prep the right spaces and avoid wasted energy.</p>
-          <a id="enterApp" class="home-cta" href="#plannerStart">Use planner</a>
+          <div class="home-actions">
+            <a id="enterApp" class="home-cta" href="#plannerStart">Use planner</a>
+            <details class="home-more-info">
+              <summary>More info</summary>
+              <div>
+                <article>
+                  <h2>Local AI model trained</h2>
+                  <p id="homeModelDetail">The local model trains in this browser on synthetic Ardrey Kell room-use scenarios, then estimates timing and room-choice savings without sending schedule data away.</p>
+                </article>
+                <article>
+                  <h2>AI CO2 savings estimate</h2>
+                  <p>The CO2 estimate compares the current plan against the recommended lighting and HVAC checklist, using kWh assumptions and a regional emissions factor.</p>
+                </article>
+              </div>
+            </details>
+          </div>
         </div>
         <div class="home-preview" aria-label="App preview">
           <div class="preview-topline">
@@ -155,12 +170,15 @@
                     <input id="students" type="number" min="1" max="250" step="1" required>
                   </label>
                   <label>
-                    Priority
+                    Event type
                     <select id="priority">
-                      <option value="normal">Normal</option>
-                      <option value="exam">Exam/event</option>
+                      <option value="club">Club</option>
+                      <option value="exam">Exam/testing</option>
                       <option value="athletics">Athletics</option>
-                      <option value="admin">Staff/admin</option>
+                      <option value="meeting">Meeting</option>
+                      <option value="performance">Performance</option>
+                      <option value="staff">Staff/admin</option>
+                      <option value="community">Community event</option>
                     </select>
                   </label>
                 </div>

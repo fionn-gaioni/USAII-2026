@@ -1,18 +1,23 @@
 const ROOMS = [
-  { id: "a101", name: "A101 NLD", floor: 1, zone: "A Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 206, z: 76, w: 82, d: 58, h: 36 },
-  { id: "a107", name: "A107 NLD", floor: 1, zone: "A Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 288, z: 76, w: 82, d: 58, h: 36 },
-  { id: "a111", name: "A111 NLD", floor: 1, zone: "A Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 370, z: 76, w: 82, d: 58, h: 36 },
-  { id: "b101", name: "B101 NLD", floor: 1, zone: "B Wing", capacity: 30, type: "Classroom", lightsKw: 0.4, hvacKw: 2.6, x: 76, z: 116, w: 82, d: 58, h: 38 },
-  { id: "b108", name: "B108", floor: 1, zone: "B Wing", capacity: 34, type: "Classroom", lightsKw: 0.46, hvacKw: 2.8, x: 76, z: 174, w: 82, d: 58, h: 38 },
-  { id: "c101", name: "C101 NPF", floor: 1, zone: "C Wing", capacity: 34, type: "Classroom", lightsKw: 0.45, hvacKw: 2.8, x: 206, z: 294, w: 82, d: 58, h: 36 },
-  { id: "c110", name: "C110 NPF", floor: 1, zone: "C Wing", capacity: 38, type: "Classroom", lightsKw: 0.5, hvacKw: 3.1, x: 288, z: 294, w: 82, d: 58, h: 38 },
-  { id: "c115", name: "C115 NLD", floor: 1, zone: "C Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 370, z: 294, w: 82, d: 58, h: 36 },
+  { id: "a101", name: "A101", floor: 1, zone: "A Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 164, z: 76, w: 72, d: 58, h: 36 },
+  { id: "a102", name: "A102", floor: 1, zone: "A Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 236, z: 76, w: 72, d: 58, h: 36 },
+  { id: "a103", name: "A103", floor: 1, zone: "A Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 308, z: 76, w: 72, d: 58, h: 36 },
+  { id: "a104", name: "A104", floor: 1, zone: "A Wing", capacity: 34, type: "Classroom", lightsKw: 0.45, hvacKw: 2.8, x: 380, z: 76, w: 72, d: 58, h: 36 },
+  { id: "b101", name: "B101", floor: 1, zone: "B Wing", capacity: 30, type: "Classroom", lightsKw: 0.4, hvacKw: 2.6, x: 76, z: 90, w: 82, d: 48, h: 38 },
+  { id: "b102", name: "B102", floor: 1, zone: "B Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 76, z: 138, w: 82, d: 48, h: 38 },
+  { id: "b103", name: "B103", floor: 1, zone: "B Wing", capacity: 34, type: "Classroom", lightsKw: 0.46, hvacKw: 2.8, x: 76, z: 186, w: 82, d: 48, h: 38 },
+  { id: "b104", name: "B104", floor: 1, zone: "B Wing", capacity: 30, type: "Classroom", lightsKw: 0.4, hvacKw: 2.6, x: 76, z: 234, w: 82, d: 48, h: 38 },
+  { id: "c101", name: "C101", floor: 1, zone: "C Wing", capacity: 34, type: "Classroom", lightsKw: 0.45, hvacKw: 2.8, x: 164, z: 294, w: 72, d: 58, h: 36 },
+  { id: "c102", name: "C102", floor: 1, zone: "C Wing", capacity: 36, type: "Classroom", lightsKw: 0.48, hvacKw: 3.0, x: 236, z: 294, w: 72, d: 58, h: 38 },
+  { id: "c103", name: "C103", floor: 1, zone: "C Wing", capacity: 38, type: "Classroom", lightsKw: 0.5, hvacKw: 3.1, x: 308, z: 294, w: 72, d: 58, h: 38 },
+  { id: "c104", name: "C104", floor: 1, zone: "C Wing", capacity: 32, type: "Classroom", lightsKw: 0.42, hvacKw: 2.7, x: 380, z: 294, w: 72, d: 58, h: 36 },
   { id: "courtyard", name: "Courtyard", floor: 1, zone: "Central", capacity: 120, type: "Outdoor", lightsKw: 1.1, hvacKw: 0, x: 204, z: 174, w: 248, d: 84, h: 12 },
   { id: "auditorium", name: "Auditorium", floor: 2, zone: "Mall Area", capacity: 420, type: "Assembly", lightsKw: 5.6, hvacKw: 12.4, x: 452, z: 272, w: 132, d: 86, h: 58 },
   { id: "cafeteria", name: "Cafeteria", floor: 2, zone: "Mall Area", capacity: 260, type: "Cafeteria", lightsKw: 3.8, hvacKw: 8.6, x: 452, z: 76, w: 94, d: 58, h: 52 },
-  { id: "b201", name: "B201 IMP", floor: 2, zone: "B Wing", capacity: 36, type: "Classroom", lightsKw: 0.5, hvacKw: 3.0, x: 76, z: 116, w: 82, d: 58, h: 40 },
-  { id: "a220", name: "A220 Prep", floor: 2, zone: "A Wing", capacity: 48, type: "Prep Room", lightsKw: 0.66, hvacKw: 3.8, x: 206, z: 76, w: 82, d: 58, h: 38 },
-  { id: "a224", name: "A224 EXTEMP", floor: 2, zone: "A Wing", capacity: 34, type: "Competition", lightsKw: 0.48, hvacKw: 3.0, x: 288, z: 76, w: 82, d: 58, h: 38 }
+  { id: "a201", name: "A201", floor: 2, zone: "A Wing", capacity: 48, type: "Prep Room", lightsKw: 0.66, hvacKw: 3.8, x: 164, z: 76, w: 72, d: 58, h: 38 },
+  { id: "a202", name: "A202", floor: 2, zone: "A Wing", capacity: 34, type: "Competition", lightsKw: 0.48, hvacKw: 3.0, x: 236, z: 76, w: 72, d: 58, h: 38 },
+  { id: "b201", name: "B201", floor: 2, zone: "B Wing", capacity: 36, type: "Classroom", lightsKw: 0.5, hvacKw: 3.0, x: 76, z: 90, w: 82, d: 48, h: 40 },
+  { id: "b202", name: "B202", floor: 2, zone: "B Wing", capacity: 34, type: "Classroom", lightsKw: 0.46, hvacKw: 2.9, x: 76, z: 138, w: 82, d: 48, h: 40 }
 ];
 
 const DEFAULT_EVENTS = [];
@@ -77,6 +82,15 @@ function cloneDefaultEvents() {
 
 let energyModel = null;
 const MODEL_FEATURES = ["bias", "area", "capacity", "duration", "occupancy", "floor", "lights", "hvac", "projector", "afterHours", "largeSpace"];
+const EVENT_TYPE_LABELS = {
+  club: "Club",
+  exam: "Exam/testing",
+  athletics: "Athletics",
+  meeting: "Meeting",
+  performance: "Performance",
+  staff: "Staff/admin",
+  community: "Community event"
+};
 
 function minutes(time) {
   const [hours, mins] = time.split(":").map(Number);
@@ -126,6 +140,20 @@ function getLayerNeed(event, layer) {
 
 function getSystemsForEvent(event) {
   return getEnabledLayers().filter((layer) => getLayerNeed(event, layer));
+}
+
+function getEventTypeLabel(value) {
+  return EVENT_TYPE_LABELS[value] || EVENT_TYPE_LABELS.club;
+}
+
+function getEventTypeTone(value) {
+  return value === "club" || value === "meeting" || value === "staff" ? "green" : "amber";
+}
+
+function normalizeEventType(value) {
+  if (value === "normal") return "club";
+  if (value === "admin") return "staff";
+  return EVENT_TYPE_LABELS[value] ? value : "club";
 }
 
 async function loadWeatherForecast() {
@@ -537,13 +565,26 @@ function buildActions() {
 function loadEvents() {
   const stored = localStorage.getItem(storageKey());
   const loaded = stored ? JSON.parse(stored) : cloneDefaultEvents();
-  state.events = loaded.filter((event) => getRoom(event.roomId));
+  let changed = false;
+  state.events = loaded
+    .filter((event) => getRoom(event.roomId))
+    .map((event) => {
+      const priority = normalizeEventType(event.priority);
+      if (priority !== event.priority) changed = true;
+      return { ...event, priority };
+    });
   if (!getRoom(state.selectedRoomId)) state.selectedRoomId = ROOMS[0].id;
-  if (stored && state.events.length !== loaded.length) saveEvents();
+  if (stored && (changed || state.events.length !== loaded.length)) saveEvents();
 }
 
 function saveEvents() {
   localStorage.setItem(storageKey(), JSON.stringify(state.events));
+}
+
+function renderHomeModelDetail() {
+  const detail = $("#homeModelDetail");
+  if (!detail || !energyModel) return;
+  detail.textContent = `Trained in this browser on ${energyModel.examples} synthetic Ardrey Kell room-use scenarios. Current validation error is about ${energyModel.rmse.toFixed(2)} kWh RMSE, and schedule data stays local.`;
 }
 
 function roomOptionLabel(room) {
@@ -627,10 +668,6 @@ function renderModel() {
         <span class="floor-wing top-wing"></span>
         <span class="floor-wing left-wing"></span>
         <span class="floor-wing bottom-wing"></span>
-        <span class="hallway-label a-hallway">A Hallway</span>
-        <span class="hallway-label b-hallway">B Hallway</span>
-        <span class="hallway-label c-hallway">C Hallway</span>
-        <span class="courtyard-cutout">Courtyard</span>
         <span class="floor-label">Floor 1</span>
       </span>
       <span class="floor-plate floor-two">
@@ -705,7 +742,6 @@ function renderKpis(analysis) {
     <div class="kpi"><span>On now</span><strong>${analysis.layerRoomsNow}</strong></div>
     <div class="kpi"><span>Soon</span><strong>${analysis.neededSoon}</strong></div>
     <div class="kpi"><span>CO2</span><strong>${analysis.totalCo2.toFixed(1)} kg</strong></div>
-    <div class="kpi kpi-savings"><span>AI saved</span><strong>${analysis.aiSavings.totalCo2.toFixed(1)} kg</strong></div>
   `;
 }
 
@@ -749,23 +785,10 @@ function renderActions(actions) {
 }
 
 function buildModelInsights(analysis) {
-  const insights = [{
-    title: "Local AI model trained",
-    detail: `Trained in this browser on ${energyModel.examples} synthetic AKHS room-use scenarios. Current validation error is about ${energyModel.rmse.toFixed(2)} kWh RMSE.`,
-    tone: "blue"
-  }];
+  const insights = [];
 
   if (!state.events.length) {
-    insights[0].detail += " Add a club or meeting and it will estimate energy, flag low-occupancy rooms, and suggest room moves.";
     return insights;
-  }
-
-  if (analysis.aiSavings.totalKwh > 0) {
-    insights.push({
-      title: "AI CO2 savings estimate",
-      detail: `Following the timing checklist and room recommendations could avoid about ${analysis.aiSavings.totalCo2.toFixed(1)} kg CO2 (${analysis.aiSavings.totalKwh.toFixed(1)} kWh): ${analysis.aiSavings.timingCo2.toFixed(1)} kg from cleaner shutoff timing and ${analysis.aiSavings.moveCo2.toFixed(1)} kg from room choices.`,
-      tone: "green"
-    });
   }
 
   const bestMove = analysis.aiSavings.moveRecommendations[0];
@@ -806,7 +829,9 @@ function buildModelInsights(analysis) {
 }
 
 function renderModelInsights(analysis) {
-  $("#modelInsights").innerHTML = buildModelInsights(analysis).map((insight) => `
+  const insights = buildModelInsights(analysis);
+  $("#modelInsights").hidden = !insights.length;
+  $("#modelInsights").innerHTML = insights.map((insight) => `
     <article class="model-card ${insight.tone}">
       <h3>${insight.title}</h3>
       <p>${insight.detail}</p>
@@ -844,7 +869,7 @@ function renderScheduleList() {
             <p>${formatTime(event.start)}-${formatTime(event.end)} - ${room.name} - Floor ${room.floor} - ${event.students} students</p>
             <p>${systems || "No systems selected"}</p>
           </div>
-          <span class="pill ${event.priority === "normal" ? "green" : "amber"}">${event.priority}</span>
+          <span class="pill ${getEventTypeTone(event.priority)}">${getEventTypeLabel(event.priority)}</span>
         </div>
         <div class="card-actions">
           <button type="button" data-edit="${event.id}">Edit</button>
@@ -888,7 +913,7 @@ function resetForm() {
   $("#startTime").value = "15:30";
   $("#endTime").value = "16:30";
   $("#students").value = "20";
-  $("#priority").value = "normal";
+  $("#priority").value = "club";
   $("#needLights").checked = true;
   $("#needHvac").checked = true;
   $("#needProjector").checked = false;
@@ -904,7 +929,7 @@ function fillForm(event) {
   $("#startTime").value = event.start;
   $("#endTime").value = event.end;
   $("#students").value = event.students;
-  $("#priority").value = event.priority;
+  $("#priority").value = normalizeEventType(event.priority);
   $("#needLights").checked = event.needs.lights;
   $("#needHvac").checked = event.needs.hvac;
   $("#needProjector").checked = event.needs.projector;
@@ -1184,6 +1209,7 @@ function bindEvents() {
 
 function init() {
   trainEnergyModel();
+  renderHomeModelDetail();
   $("#planDate").value = state.date;
   $("#timeSlider").value = state.previewMinute;
   renderRoomOptions();
